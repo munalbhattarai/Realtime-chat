@@ -1,6 +1,17 @@
 import uuid
+
 from django.conf import settings
 from django.db import models
+
+
+class ConversationType(models.TextChoices):
+    PRIVATE = "PRIVATE", "Private"
+    GROUP = "GROUP", "Group"
+
+
+class MemberRole(models.TextChoices):
+    ADMIN = "ADMIN", "Admin"
+    MEMBER = "MEMBER", "Member"
 
 
 class Conversation(models.Model):
@@ -10,14 +21,9 @@ class Conversation(models.Model):
         editable=False,
     )
 
-    CONVERSATION_TYPES = [
-        ("PRIVATE", "Private"),
-        ("GROUP", "Group"),
-    ]
-
     type = models.CharField(
         max_length=10,
-        choices=CONVERSATION_TYPES,
+        choices=ConversationType.choices,
     )
 
     name = models.CharField(
@@ -28,7 +34,7 @@ class Conversation(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
 
 class ConversationMember(models.Model):
     conversation = models.ForeignKey(
@@ -43,14 +49,10 @@ class ConversationMember(models.Model):
         related_name="conversation_memberships",
     )
 
-    ROLES = [
-        ("ADMIN", "Admin"),
-        ("MEMBER", "Member"),
-    ]
-
     role = models.CharField(
         max_length=6,
-        choices=ROLES,
+        choices=MemberRole.choices,
+        default=MemberRole.MEMBER,
     )
 
     joined_at = models.DateTimeField(auto_now_add=True)
