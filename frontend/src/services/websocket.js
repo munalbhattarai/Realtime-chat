@@ -9,28 +9,27 @@ const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
 const MAX_RECONNECT_ATTEMPTS = 20;
 
-/**
- * Strip any scheme (ws://, wss://, http://, https://) and trailing
- * path/query so VITE_WS_HOST is always reduced to host(:port) only.
- */
-ChatWebSocket.normalizeHost = function normalizeHost(raw) {
-  if (!raw) return raw;
-  let host = String(raw).trim();
-
-  const schemeMatch = host.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//);
-  if (schemeMatch) {
-    host = host.slice(schemeMatch[0].length);
-  }
-
-  const slashIndex = host.indexOf("/");
-  if (slashIndex !== -1) {
-    host = host.slice(0, slashIndex);
-  }
-
-  return host;
-};
-
 export class ChatWebSocket {
+  /**
+   * Strip any scheme (ws://, wss://, http://, https://) and trailing
+   * path/query so VITE_WS_HOST is always reduced to host(:port) only.
+   */
+  static normalizeHost(raw) {
+    if (!raw) return raw;
+    let host = String(raw).trim();
+
+    const schemeMatch = host.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//);
+    if (schemeMatch) {
+      host = host.slice(schemeMatch[0].length);
+    }
+
+    const slashIndex = host.indexOf("/");
+    if (slashIndex !== -1) {
+      host = host.slice(0, slashIndex);
+    }
+
+    return host;
+  }
   constructor({
     conversationId,
     token,

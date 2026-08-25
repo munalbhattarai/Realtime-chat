@@ -1,4 +1,6 @@
 import axios from "axios";
+import { store } from "../app/store";
+import { setAccessToken } from "../features/auth/authSlice";
 
 const isLocal =
   typeof window !== "undefined" &&
@@ -22,9 +24,6 @@ const api = axios.create({
 });
 
 let refreshPromise = null;
-
-import { store } from "../app/store";
-import { setAccessToken } from "../features/auth/authSlice";
 
 const refreshAccessToken = async () => {
   const refreshToken =
