@@ -39,7 +39,7 @@ const ChatWindow = () => {
     (state) => state.conversations.items[0]?.id,
   );
 
-  const effectiveConversationId = activeConversationId || firstConversationId;
+  const effectiveConversationId = activeConversationId || firstConversationId || "user";
 
   const conversation = useSelector(
     (state) =>

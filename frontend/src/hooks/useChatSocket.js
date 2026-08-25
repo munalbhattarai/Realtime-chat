@@ -21,9 +21,16 @@ import {
 } from "../features/messages/messageSlice";
 
 import { ChatWebSocket } from "../services/websocket";
-import { updateConversationMember, bumpConversationToTop, updateMemberAcrossAllConversations } from "../features/conversations/conversationSlice";
+import {
+  updateConversationMember,
+  bumpConversationToTop,
+  updateMemberAcrossAllConversations,
+  addOrUpdateConversation,
+  fetchConversationsSuccess,
+} from "../features/conversations/conversationSlice";
 import { setUser } from "../features/auth/authSlice";
 import { createMessage as createMessageApi } from "../features/messages/messageApi";
+import { getConversations } from "../features/conversations/conversationApi";
 
 /** How long before a stale typing indicator auto-expires (ms). */
 const TYPING_EXPIRY_MS = 5000;
@@ -143,7 +150,25 @@ const useChatSocket = (
             })
           );
 
+          // Auto-sync conversation list in case this was a message from a new conversation
+          getConversations()
+            .then((data) => {
+              dispatch(fetchConversationsSuccess(data.results ?? data));
+            })
+            .catch(() => {});
 
+          break;
+        }
+
+        case "conversation.created": {
+          if (event.conversation) {
+            dispatch(addOrUpdateConversation(event.conversation));
+          }
+          getConversations()
+            .then((data) => {
+              dispatch(fetchConversationsSuccess(data.results ?? data));
+            })
+            .catch(() => {});
           break;
         }
 

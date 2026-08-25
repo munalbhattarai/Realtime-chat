@@ -23,6 +23,41 @@ from .serializers import MessageSerializer
 from .services import create_message, upload_image_to_cloudinary, mark_conversation_messages_as_read
 
 
+def broadcast_message_created_to_all(conversation, message, sender):
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+    channel_layer = get_channel_layer()
+    if not channel_layer:
+        return
+    msg_payload = {
+        "type": "message.created",
+        "message_id": str(message.id),
+        "conversation_id": str(conversation.id),
+        "sender_id": sender.id,
+        "sender_username": sender.username,
+        "content": message.content,
+        "image_url": message.image_url,
+        "created_at": message.created_at.isoformat(),
+    }
+    try:
+        async_to_sync(channel_layer.group_send)(
+            f"conversation_{conversation.id}",
+            msg_payload,
+        )
+    except Exception as e:
+        print(f"Group broadcast warning: {e}")
+
+    for member in conversation.members.all():
+        if member.user_id != sender.id:
+            try:
+                async_to_sync(channel_layer.group_send)(
+                    f"user_{member.user_id}",
+                    msg_payload,
+                )
+            except Exception as e:
+                print(f"User group broadcast warning: {e}")
+
+
 class ConversationMessageListCreateView(
     generics.ListCreateAPIView
 ):
@@ -87,25 +122,7 @@ class ConversationMessageListCreateView(
             content=serializer.validated_data.get("content", ""),
         )
         serializer.instance = message
-
-        try:
-            channel_layer = get_channel_layer()
-            if channel_layer:
-                async_to_sync(channel_layer.group_send)(
-                    f"conversation_{conversation.id}",
-                    {
-                        "type": "message.created",
-                        "message_id": str(message.id),
-                        "conversation_id": str(conversation.id),
-                        "sender_id": self.request.user.id,
-                        "sender_username": self.request.user.username,
-                        "content": message.content,
-                        "image_url": message.image_url,
-                        "created_at": message.created_at.isoformat(),
-                    },
-                )
-        except Exception as e:
-            print(f"Error broadcasting message create: {e}")
+        broadcast_message_created_to_all(conversation, message, self.request.user)
 
 
 class MessageDetailView(
@@ -190,21 +207,8 @@ class UploadMessageImageView(APIView):
                 image_url=image_url,
             )
 
-            # Broadcast via Channel Layer to WebSocket group
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                f"conversation_{conversation_id}",
-                {
-                    "type": "message.created",
-                    "message_id": str(message.id),
-                    "conversation_id": str(conversation_id),
-                    "sender_id": request.user.id,
-                    "sender_username": request.user.username,
-                    "content": message.content,
-                    "image_url": message.image_url,
-                    "created_at": message.created_at.isoformat(),
-                },
-            )
+            # Broadcast via Channel Layer to WebSocket groups
+            broadcast_message_created_to_all(conversation, message, request.user)
 
             serializer = MessageSerializer(message, context={"request": request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)

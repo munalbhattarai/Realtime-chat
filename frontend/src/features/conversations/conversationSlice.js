@@ -172,6 +172,22 @@ const conversationSlice = createSlice({
 
 
 
+    addOrUpdateConversation: (state, action) => {
+      const conversation = action.payload;
+      if (!conversation || !conversation.id) return;
+      const index = state.items.findIndex(
+        (item) => String(item.id) === String(conversation.id)
+      );
+      if (index !== -1) {
+        state.items[index] = {
+          ...state.items[index],
+          ...conversation,
+        };
+      } else {
+        state.items.unshift(conversation);
+      }
+    },
+
     clearActiveConversation: (state) => {
       state.activeConversationId = null;
     },
@@ -210,6 +226,7 @@ export const {
   setActiveConversation,
   updateConversationMember,
   updateMemberAcrossAllConversations,
+  addOrUpdateConversation,
   bumpConversationToTop,
   removeConversation,
   clearActiveConversation,

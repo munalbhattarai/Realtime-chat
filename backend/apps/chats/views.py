@@ -33,6 +33,26 @@ class ConversationListView(generics.ListAPIView):
 
 
 
+def broadcast_conversation_created(conversation, request):
+    from channels.layers import get_channel_layer
+    from asgiref.sync import async_to_sync
+    channel_layer = get_channel_layer()
+    if not channel_layer:
+        return
+    for member in conversation.members.all():
+        try:
+            serializer = ConversationSerializer(conversation, context={"request": request})
+            async_to_sync(channel_layer.group_send)(
+                f"user_{member.user_id}",
+                {
+                    "type": "conversation.created",
+                    "conversation": serializer.data,
+                }
+            )
+        except Exception as e:
+            print(f"Error broadcasting conversation.created to user {member.user_id}: {e}")
+
+
 class PrivateConversationCreateView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PrivateConversationCreateSerializer
@@ -47,6 +67,8 @@ class PrivateConversationCreateView(generics.CreateAPIView):
             conversation,
             context={"request": request},
         )
+
+        broadcast_conversation_created(conversation, request)
 
         return Response(
             response_serializer.data,
@@ -71,6 +93,8 @@ class GroupConversationCreateView(generics.CreateAPIView):
             conversation,
             context={"request": request},
         )
+
+        broadcast_conversation_created(conversation, request)
 
         return Response(
             response_serializer.data,

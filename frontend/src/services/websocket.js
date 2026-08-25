@@ -129,9 +129,14 @@ export class ChatWebSocket {
 
     const wsHost = ChatWebSocket.normalizeHost(rawWsHost);
 
+    const path =
+      this.conversationId && this.conversationId !== "user"
+        ? `/ws/chat/${this.conversationId}/`
+        : `/ws/chat/user/`;
+
     const url =
       `${protocol}://${wsHost}` +
-      `/ws/chat/${this.conversationId}/` +
+      path +
       `?token=${encodeURIComponent(this.token)}`;
 
     this.socket = new WebSocket(url);

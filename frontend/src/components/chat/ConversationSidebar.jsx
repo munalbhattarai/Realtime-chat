@@ -26,6 +26,20 @@ const ConversationSidebar = () => {
 
   useEffect(() => {
     fetchAll();
+
+    const handleFocus = () => {
+      fetchAll();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    const interval = setInterval(() => {
+      fetchAll();
+    }, 10000);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(interval);
+    };
   }, [fetchAll]);
 
   return (

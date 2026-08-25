@@ -35,41 +35,47 @@ class ChatConsumer(
             await self.close(code=4001)
             return
 
-        self.conversation_id = (
-            self.scope["url_route"]["kwargs"][
-                "conversation_id"
-            ]
-        )
-
-        if not await self.is_conversation_member():
-            await self.accept()
-            await self.close(code=4003)
-            return
+        raw_conv_id = self.scope.get("url_route", {}).get("kwargs", {}).get("conversation_id")
+        if raw_conv_id and raw_conv_id != "user":
+            self.conversation_id = raw_conv_id
+            if not await self.is_conversation_member():
+                await self.accept()
+                await self.close(code=4003)
+                return
+            self.room_group_name = conversation_group_name(self.conversation_id)
+        else:
+            self.conversation_id = None
+            self.room_group_name = None
 
         await self.accept()
 
-        self.room_group_name = (
-            conversation_group_name(
-                self.conversation_id
-            )
-        )
+        self.user_group_name = f"user_{self.user.id}"
 
         try:
+            # Join personal user group so global notifications/new chats reach this socket
             await self.channel_layer.group_add(
-                self.room_group_name,
+                self.user_group_name,
                 self.channel_name,
             )
+
+            if self.room_group_name:
+                await self.channel_layer.group_add(
+                    self.room_group_name,
+                    self.channel_name,
+                )
+
             # Join room groups for all conversations the user is a member of
             # so real-time updates (unread counts/badges) work across all chats
             await self.join_all_user_conversation_groups()
         except Exception as err:
             print(f"Group add error on connect: {err}")
 
-        try:
-            # Mark all messages as read for this user.
-            await self.mark_all_conversation_messages_read()
-        except Exception as err:
-            print(f"Mark read error on connect: {err}")
+        if self.conversation_id:
+            try:
+                # Mark all messages as read for this user.
+                await self.mark_all_conversation_messages_read()
+            except Exception as err:
+                print(f"Mark read error on connect: {err}")
 
         try:
             # Track this connection.
@@ -77,8 +83,9 @@ class ChatConsumer(
                 await self.add_user_connection()
             )
 
-            # Send users already online.
-            await self.send_existing_online_users()
+            if self.conversation_id:
+                # Send users already online in this conversation.
+                await self.send_existing_online_users()
 
             # Only broadcast online on first connection.
             if connection_count == 1:
@@ -90,26 +97,28 @@ class ChatConsumer(
             {
                 "type": "connection",
                 "message": (
-                    "Connected to conversation."
+                    "Connected to Web-Net."
                 ),
                 "conversation_id": str(
                     self.conversation_id
-                ),
+                ) if self.conversation_id else None,
             }
         )
 
     async def disconnect(self, close_code):
-        if not hasattr(
-            self,
-            "room_group_name",
-        ):
-            return
-
         try:
-            await self.channel_layer.group_discard(
-                self.room_group_name,
-                self.channel_name,
-            )
+            if hasattr(self, "user_group_name") and self.user_group_name:
+                await self.channel_layer.group_discard(
+                    self.user_group_name,
+                    self.channel_name,
+                )
+
+            if hasattr(self, "room_group_name") and self.room_group_name:
+                await self.channel_layer.group_discard(
+                    self.room_group_name,
+                    self.channel_name,
+                )
+
             await self.leave_all_user_conversation_groups()
         except Exception as err:
             print(f"Group discard error on disconnect: {err}")
@@ -226,25 +235,40 @@ class ChatConsumer(
         )
 
         try:
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {
-                    "type": "message.created",
-                    "message_id": str(message.id),
-                    "conversation_id": str(
-                        self.conversation_id
-                    ),
-                    "sender_id": self.user.id,
-                    "sender_username": (
-                        self.user.username
-                    ),
-                    "content": message.content,
-                    "image_url": message.image_url,
-                    "created_at": (
-                        message.created_at.isoformat()
-                    ),
-                },
-            )
+            msg_payload = {
+                "type": "message.created",
+                "message_id": str(message.id),
+                "conversation_id": str(
+                    self.conversation_id
+                ),
+                "sender_id": self.user.id,
+                "sender_username": (
+                    self.user.username
+                ),
+                "content": message.content,
+                "image_url": message.image_url,
+                "created_at": (
+                    message.created_at.isoformat()
+                ),
+            }
+
+            if self.room_group_name:
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    msg_payload,
+                )
+
+            # Also broadcast directly to each member's personal user group
+            member_ids = await self.get_conversation_member_ids()
+            for member_id in member_ids:
+                if member_id != self.user.id:
+                    try:
+                        await self.channel_layer.group_send(
+                            f"user_{member_id}",
+                            msg_payload,
+                        )
+                    except Exception as err:
+                        print(f"User group broadcast warning: {err}")
         except Exception as err:
             print(f"Group broadcast warning: {err}")
 
@@ -383,6 +407,28 @@ class ChatConsumer(
                         "updated_at"
                     ],
                 },
+            }
+        )
+
+    async def conversation_created(
+        self,
+        event,
+    ):
+        conv_data = event.get("conversation", {})
+        conv_id = conv_data.get("id")
+        if conv_id:
+            try:
+                await self.channel_layer.group_add(
+                    f"conversation_{conv_id}",
+                    self.channel_name,
+                )
+            except Exception as e:
+                print(f"Error subscribing to new conversation group: {e}")
+
+        await self.send_json(
+            {
+                "type": "conversation.created",
+                "conversation": conv_data,
             }
         )
 
@@ -729,5 +775,15 @@ class ChatConsumer(
         return list(
             ConversationMember.objects.filter(user=self.user)
             .values_list("conversation_id", flat=True)
+        )
+
+    @database_sync_to_async
+    def get_conversation_member_ids(self):
+        if not self.conversation_id:
+            return []
+        return list(
+            ConversationMember.objects.filter(
+                conversation_id=self.conversation_id
+            ).values_list("user_id", flat=True)
         )
 
