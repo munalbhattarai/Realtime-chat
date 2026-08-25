@@ -1,11 +1,18 @@
 import axios from "axios";
 
-const DEFAULT_API_URL =
+const isLocal =
+  typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1");
+
+const RAW_API_URL =
   import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined" &&
-  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  (isLocal
     ? "http://127.0.0.1:8000/api"
     : "https://realtime-chat-rrwp.onrender.com/api");
+
+// Ensure exactly one trailing slash, so axios path joins stay clean.
+const DEFAULT_API_URL = RAW_API_URL.replace(/\/+$/, "/");
 
 const api = axios.create({
   baseURL: DEFAULT_API_URL,

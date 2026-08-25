@@ -9,6 +9,27 @@ const RECONNECT_BASE_MS = 1000;
 const RECONNECT_MAX_MS = 30000;
 const MAX_RECONNECT_ATTEMPTS = 20;
 
+/**
+ * Strip any scheme (ws://, wss://, http://, https://) and trailing
+ * path/query so VITE_WS_HOST is always reduced to host(:port) only.
+ */
+ChatWebSocket.normalizeHost = function normalizeHost(raw) {
+  if (!raw) return raw;
+  let host = String(raw).trim();
+
+  const schemeMatch = host.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//);
+  if (schemeMatch) {
+    host = host.slice(schemeMatch[0].length);
+  }
+
+  const slashIndex = host.indexOf("/");
+  if (slashIndex !== -1) {
+    host = host.slice(0, slashIndex);
+  }
+
+  return host;
+};
+
 export class ChatWebSocket {
   constructor({
     conversationId,
@@ -89,17 +110,25 @@ export class ChatWebSocket {
   /* ── internals ──────────────────────────────────────── */
 
   _createSocket() {
+    // Use wss:// when the page is served over HTTPS, ws:// over HTTP.
     const protocol =
       window.location.protocol === "https:"
         ? "wss"
         : "ws";
 
-    const wsHost =
+    // Resolve the WebSocket host. VITE_WS_HOST must be hostname(:port) only —
+    // no scheme, /api or /ws. We normalize it so a misconfigured value
+    // (e.g. "wss://host" or "host/") still produces a valid URL.
+    const isLocal =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1");
+
+    const rawWsHost =
       import.meta.env.VITE_WS_HOST ||
-      (typeof window !== "undefined" &&
-      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-        ? "127.0.0.1:8000"
-        : "realtime-chat-rrwp.onrender.com");
+      (isLocal ? "127.0.0.1:8000" : "realtime-chat-rrwp.onrender.com");
+
+    const wsHost = ChatWebSocket.normalizeHost(rawWsHost);
 
     const url =
       `${protocol}://${wsHost}` +
