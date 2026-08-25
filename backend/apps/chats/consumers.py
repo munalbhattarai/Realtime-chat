@@ -187,26 +187,53 @@ class ChatConsumer(
                 }
             )
             return
+        except Exception as exc:
+            await self.send_json(
+                {
+                    "type": "error",
+                    "message": f"Failed to save message: {str(exc)}",
+                }
+            )
+            return
 
-        await self.channel_layer.group_send(
-            self.room_group_name,
+        # Send instant confirmation directly to sender
+        await self.send_json(
             {
                 "type": "message.created",
-                "message_id": str(message.id),
-                "conversation_id": str(
-                    self.conversation_id
-                ),
-                "sender_id": self.user.id,
-                "sender_username": (
-                    self.user.username
-                ),
-                "content": message.content,
-                "image_url": message.image_url,
-                "created_at": (
-                    message.created_at.isoformat()
-                ),
-            },
+                "message": {
+                    "id": str(message.id),
+                    "conversation_id": str(self.conversation_id),
+                    "sender_id": self.user.id,
+                    "sender_username": self.user.username,
+                    "content": message.content,
+                    "image_url": message.image_url,
+                    "created_at": message.created_at.isoformat(),
+                },
+            }
         )
+
+        try:
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    "type": "message.created",
+                    "message_id": str(message.id),
+                    "conversation_id": str(
+                        self.conversation_id
+                    ),
+                    "sender_id": self.user.id,
+                    "sender_username": (
+                        self.user.username
+                    ),
+                    "content": message.content,
+                    "image_url": message.image_url,
+                    "created_at": (
+                        message.created_at.isoformat()
+                    ),
+                },
+            )
+        except Exception as err:
+            print(f"Group broadcast warning: {err}")
 
     async def handle_typing(
         self,
