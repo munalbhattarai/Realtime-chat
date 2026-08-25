@@ -96,7 +96,10 @@ export class ChatWebSocket {
 
     const wsHost =
       import.meta.env.VITE_WS_HOST ||
-      "127.0.0.1:8000";
+      (typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? "127.0.0.1:8000"
+        : "realtime-chat-rrwp.onrender.com");
 
     const url =
       `${protocol}://${wsHost}` +
