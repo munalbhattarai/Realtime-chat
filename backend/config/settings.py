@@ -203,7 +203,7 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-REDIS_URL = os.getenv("REDIS_URL", "")
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
 if REDIS_URL:
     CHANNEL_LAYERS = {
         "default": {

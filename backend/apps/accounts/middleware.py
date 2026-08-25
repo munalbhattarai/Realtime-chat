@@ -40,6 +40,8 @@ class JWTAuthMiddleware(BaseMiddleware):
         token = query_params.get("token", [None])[0]
 
         if token:
+            if token.startswith("Bearer "):
+                token = token[7:]
             scope["user"] = await get_user_from_token(token)
 
         return await super().__call__(

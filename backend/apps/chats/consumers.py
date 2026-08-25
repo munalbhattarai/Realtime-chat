@@ -31,6 +31,7 @@ class ChatConsumer(
             not self.user
             or not self.user.is_authenticated
         ):
+            await self.accept()
             await self.close(code=4001)
             return
 
@@ -41,8 +42,11 @@ class ChatConsumer(
         )
 
         if not await self.is_conversation_member():
+            await self.accept()
             await self.close(code=4003)
             return
+
+        await self.accept()
 
         self.room_group_name = (
             conversation_group_name(
@@ -58,8 +62,6 @@ class ChatConsumer(
         # Join room groups for all conversations the user is a member of
         # so real-time updates (unread counts/badges) work across all chats
         await self.join_all_user_conversation_groups()
-
-        await self.accept()
 
         # Mark all messages as read for this user.
         await self.mark_all_conversation_messages_read()
