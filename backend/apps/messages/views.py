@@ -81,11 +81,31 @@ class ConversationMessageListCreateView(
             conversation,
         )
 
-        create_message(
+        message = create_message(
             conversation=conversation,
             sender=self.request.user,
             content=serializer.validated_data.get("content", ""),
         )
+        serializer.instance = message
+
+        try:
+            channel_layer = get_channel_layer()
+            if channel_layer:
+                async_to_sync(channel_layer.group_send)(
+                    f"conversation_{conversation.id}",
+                    {
+                        "type": "message.created",
+                        "message_id": str(message.id),
+                        "conversation_id": str(conversation.id),
+                        "sender_id": self.request.user.id,
+                        "sender_username": self.request.user.username,
+                        "content": message.content,
+                        "image_url": message.image_url,
+                        "created_at": message.created_at.isoformat(),
+                    },
+                )
+        except Exception as e:
+            print(f"Error broadcasting message create: {e}")
 
 
 class MessageDetailView(

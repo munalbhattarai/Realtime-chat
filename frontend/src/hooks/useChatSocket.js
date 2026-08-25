@@ -23,6 +23,7 @@ import {
 import { ChatWebSocket } from "../services/websocket";
 import { updateConversationMember, bumpConversationToTop, updateMemberAcrossAllConversations } from "../features/conversations/conversationSlice";
 import { setUser } from "../features/auth/authSlice";
+import { createMessage as createMessageApi } from "../features/messages/messageApi";
 
 /** How long before a stale typing indicator auto-expires (ms). */
 const TYPING_EXPIRY_MS = 5000;
@@ -394,8 +395,8 @@ const useChatSocket = (
     return () => clearInterval(interval);
   }, [conversationId, dispatch]);
 
-  // ── Optimistic send ────────────────────────
-  const sendMessage = useCallback((content, imageUrl = null) => {
+  // ── Optimistic send with WebSocket and HTTP REST fallback ──
+  const sendMessage = useCallback(async (content, imageUrl = null) => {
     if (!content?.trim() && !imageUrl) {
       return false;
     }
@@ -428,26 +429,59 @@ const useChatSocket = (
       timestamp: Date.now(),
     });
 
-    // Send via WebSocket (queued if disconnected)
-    const sent = socketRef.current?.send({
-      type: "chat_message",
-      content: trimmedContent,
-      image_url: imageUrl,
-    });
+    const isSocketOpen = socketRef.current && socketRef.current.isConnected();
 
-    // If the socket is completely dead (not even queued), mark as failed
-    if (sent === false || sent === undefined) {
-      dispatch(
-        markMessageFailed({
-          conversationId,
-          tempId,
-        })
-      );
-      pendingOptimisticRef.current.delete(tempId);
-      return false;
+    if (isSocketOpen) {
+      socketRef.current.send({
+        type: "chat_message",
+        content: trimmedContent,
+        image_url: imageUrl,
+      });
+    } else {
+      // WebSocket is offline or reconnecting -> Fall back to reliable HTTP REST API
+      try {
+        const createdMsg = await createMessageApi(conversationId, trimmedContent);
+        if (createdMsg) {
+          pendingOptimisticRef.current.delete(tempId);
+          dispatch(
+            replaceOptimisticMessage({
+              conversationId,
+              tempId,
+              confirmedMessage: {
+                id: createdMsg.id,
+                conversation_id: conversationId,
+                sender: createdMsg.sender,
+                sender_username: createdMsg.sender_username,
+                content: createdMsg.content,
+                image_url: createdMsg.image_url,
+                created_at: createdMsg.created_at,
+                updated_at: createdMsg.updated_at || createdMsg.created_at,
+                readBy: createdMsg.readBy || {},
+              },
+            })
+          );
+          dispatch(
+            bumpConversationToTop({
+              conversationId,
+              senderId: createdMsg.sender,
+              currentUserId,
+            })
+          );
+        }
+      } catch (err) {
+        console.error("HTTP send fallback failed:", err);
+        dispatch(
+          markMessageFailed({
+            conversationId,
+            tempId,
+          })
+        );
+        pendingOptimisticRef.current.delete(tempId);
+        return false;
+      }
     }
 
-    // Set a timeout to mark as failed if server doesn't confirm in 15 seconds
+    // Safety timeout in case WS confirmation is delayed
     setTimeout(() => {
       if (pendingOptimisticRef.current.has(tempId)) {
         pendingOptimisticRef.current.delete(tempId);

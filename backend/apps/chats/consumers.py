@@ -54,29 +54,37 @@ class ChatConsumer(
             )
         )
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name,
-        )
+        try:
+            await self.channel_layer.group_add(
+                self.room_group_name,
+                self.channel_name,
+            )
+            # Join room groups for all conversations the user is a member of
+            # so real-time updates (unread counts/badges) work across all chats
+            await self.join_all_user_conversation_groups()
+        except Exception as err:
+            print(f"Group add error on connect: {err}")
 
-        # Join room groups for all conversations the user is a member of
-        # so real-time updates (unread counts/badges) work across all chats
-        await self.join_all_user_conversation_groups()
+        try:
+            # Mark all messages as read for this user.
+            await self.mark_all_conversation_messages_read()
+        except Exception as err:
+            print(f"Mark read error on connect: {err}")
 
-        # Mark all messages as read for this user.
-        await self.mark_all_conversation_messages_read()
+        try:
+            # Track this connection.
+            connection_count = (
+                await self.add_user_connection()
+            )
 
-        # Track this connection.
-        connection_count = (
-            await self.add_user_connection()
-        )
+            # Send users already online.
+            await self.send_existing_online_users()
 
-        # Send users already online.
-        await self.send_existing_online_users()
-
-        # Only broadcast online on first connection.
-        if connection_count == 1:
-            await self.broadcast_presence(True)
+            # Only broadcast online on first connection.
+            if connection_count == 1:
+                await self.broadcast_presence(True)
+        except Exception as err:
+            print(f"Presence error on connect: {err}")
 
         await self.send_json(
             {
@@ -97,21 +105,26 @@ class ChatConsumer(
         ):
             return
 
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name,
-        )
+        try:
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name,
+            )
+            await self.leave_all_user_conversation_groups()
+        except Exception as err:
+            print(f"Group discard error on disconnect: {err}")
 
-        await self.leave_all_user_conversation_groups()
+        try:
+            connection_count = (
+                await self.remove_user_connection()
+            )
 
-        connection_count = (
-            await self.remove_user_connection()
-        )
-
-        # Only broadcast offline when the
-        # user's last connection closes.
-        if connection_count == 0:
-            await self.broadcast_presence(False)
+            # Only broadcast offline when the
+            # user's last connection closes.
+            if connection_count == 0:
+                await self.broadcast_presence(False)
+        except Exception as err:
+            print(f"Presence error on disconnect: {err}")
 
     async def receive_json(
         self,

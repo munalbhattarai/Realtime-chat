@@ -254,7 +254,7 @@ const ChatWindow = () => {
         onSendImage={handleSendImage}
         onTypingStart={startTyping}
         onTypingStop={stopTyping}
-        disabled={!isConnected}
+        disabled={false}
       />
 
       <UserProfileModal

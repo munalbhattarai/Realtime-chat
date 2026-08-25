@@ -214,16 +214,25 @@ if REDIS_URL:
         },
     }
 else:
-    REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
-    REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-    CHANNEL_LAYERS = {
-        "default": {
-            "BACKEND": "channels_redis.core.RedisChannelLayer",
-            "CONFIG": {
-                "hosts": [(REDIS_HOST, REDIS_PORT)],
+    REDIS_HOST = os.getenv("REDIS_HOST", "").strip()
+    if REDIS_HOST:
+        REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
+        CHANNEL_LAYERS = {
+            "default": {
+                "BACKEND": "channels_redis.core.RedisChannelLayer",
+                "CONFIG": {
+                    "hosts": [(REDIS_HOST, REDIS_PORT)],
+                },
             },
-        },
-    }
+        }
+    else:
+        CHANNEL_LAYERS = {
+            "default": {
+                "BACKEND": "channels.layers.InMemoryChannelLayer",
+            },
+        }
+
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "True") == "True"
 
 CORS_ALLOWED_ORIGINS_ENV = os.getenv("CORS_ALLOWED_ORIGINS", "")
 if CORS_ALLOWED_ORIGINS_ENV:
@@ -232,7 +241,14 @@ else:
     CORS_ALLOWED_ORIGINS = [
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "https://chat.munal.me",
+        "https://realtime-chat-rrwp.onrender.com",
     ]
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https:\/\/.*\.pages\.dev$",
+    r"^https:\/\/.*\.munal\.me$",
+]
 
 
 MEDIA_URL = '/media/'
