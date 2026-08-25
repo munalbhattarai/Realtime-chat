@@ -58,15 +58,19 @@ const MessageBubble = memo(({
         className={["flex group mb-2.5", isOwn ? "justify-end" : "justify-start"].join(" ")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={() => isOwn && setIsHovered((prev) => !prev)}
       >
-        <div className={["relative flex flex-col max-w-[85%] sm:max-w-[75%]", isOwn ? "items-end" : "items-start"].join(" ")}>
+        <div className={["relative flex flex-col max-w-[88%] sm:max-w-[75%]", isOwn ? "items-end" : "items-start"].join(" ")}>
           {/* Actions Menu */}
           {isOwn && !isEditing && !isSending && !isFailed && (
-            <div className={["absolute -top-3 right-4 flex items-center gap-1 rounded-lg border border-red-500/40 bg-slate-950/90 p-1 shadow-lg transition-opacity duration-200 z-10 backdrop-blur-md", isHovered ? "opacity-100" : "opacity-0 pointer-events-none"].join(" ")}>
+            <div className={["absolute -top-3.5 right-2 sm:right-4 flex items-center gap-1 rounded-lg border border-red-500/40 bg-slate-950/95 p-1 shadow-lg transition-opacity duration-200 z-10 backdrop-blur-md", isHovered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"].join(" ")}>
               {message.content && (
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition active:scale-95"
                   aria-label="Edit message"
                   title="Edit"
                 >
@@ -74,8 +78,11 @@ const MessageBubble = memo(({
                 </button>
               )}
               <button
-                onClick={onDelete}
-                className="rounded p-1 text-red-400 hover:bg-red-900/40 hover:text-red-300 transition"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="rounded p-1 text-red-400 hover:bg-red-900/40 hover:text-red-300 transition active:scale-95"
                 aria-label="Delete message"
                 title="Delete"
               >

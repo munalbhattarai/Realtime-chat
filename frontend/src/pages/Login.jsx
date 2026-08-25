@@ -41,18 +41,18 @@ const Login = () => {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 spidey-web-bg relative overflow-hidden font-sans">
+    <main className="flex min-h-[100dvh] items-center justify-center p-4 sm:p-6 spidey-web-bg relative overflow-hidden font-sans">
       {/* Background glow decoration */}
-      <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-red-600/15 blur-[140px]" />
-      <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-blue-600/15 blur-[140px]" />
+      <div className="absolute top-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-red-600/15 blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-blue-600/15 blur-[140px] pointer-events-none" />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="rounded-3xl border border-red-900/40 bg-slate-950/80 p-8 shadow-[0_0_40px_rgba(220,38,38,0.25)] backdrop-blur-xl">
-          <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-900 ring-4 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.5)]">
-              <SpideyLogo size={44} />
+      <div className="w-full max-w-md relative z-10 my-auto">
+        <div className="rounded-3xl border border-red-900/40 bg-slate-950/80 p-6 sm:p-8 shadow-[0_0_40px_rgba(220,38,38,0.25)] backdrop-blur-xl">
+          <div className="mb-6 sm:mb-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-slate-900 ring-4 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.5)]">
+              <SpideyLogo size={38} className="sm:w-11 sm:h-11" />
             </div>
-            <h1 className="text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-300 to-blue-400 uppercase">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-300 to-blue-400 uppercase">
               Spidey-Chat
             </h1>
             <p className="mt-2 text-xs font-bold text-slate-400 uppercase tracking-widest">

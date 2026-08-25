@@ -8,13 +8,23 @@ const Chat = () => {
   );
 
   return (
-    <main className="h-screen overflow-hidden spidey-web-bg font-sans">
-      <div className="flex h-full relative">
-        <div className={`w-full md:w-auto h-full absolute inset-0 md:relative md:block ${activeConversationId ? 'hidden' : 'block z-10'}`}>
+    <main className="h-full h-[100dvh] w-full overflow-hidden spidey-web-bg font-sans">
+      <div className="flex h-full w-full relative overflow-hidden">
+        {/* Sidebar: full screen on mobile when no conversation active, fixed width on tablet/desktop */}
+        <div
+          className={`w-full md:w-80 lg:w-96 h-full shrink-0 ${
+            activeConversationId ? "hidden md:block" : "block"
+          }`}
+        >
           <ConversationSidebar />
         </div>
 
-        <div className={`flex-1 min-w-0 h-full absolute inset-0 md:relative md:block ${activeConversationId ? 'block z-20 spidey-web-bg' : 'hidden'}`}>
+        {/* Chat Window: full screen on mobile when conversation is active, flex-1 on tablet/desktop */}
+        <div
+          className={`flex-1 min-w-0 h-full ${
+            activeConversationId ? "block" : "hidden md:block"
+          }`}
+        >
           <ChatWindow />
         </div>
       </div>
