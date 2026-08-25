@@ -1,0 +1,20 @@
+# Environment & secrets
+.env
+.env.*
+
+# Dependencies & build
+node_modules/
+dist/
+env/
+venv/
+.venv/
+staticfiles/
+media/
+__pycache__/
+*.py[cod]
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

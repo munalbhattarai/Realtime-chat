@@ -6,12 +6,18 @@ from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import Profile
+from .services import upload_profile_picture
 
 
 User = get_user_model()
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.SerializerMethodField()
+
+    def get_profile_picture(self, obj):
+        return obj.get_profile_picture_url()
+
     class Meta:
         model = Profile
         fields = [
@@ -83,6 +89,7 @@ class LoginSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
 
         data["user"] = {
+            "id": self.user.id,
             "username": self.user.username,
             "email": self.user.email,
             "first_name": self.user.first_name,
@@ -112,6 +119,7 @@ class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
+            "id",
             "username",
             "email",
             "first_name",
@@ -122,6 +130,7 @@ class MeSerializer(serializers.ModelSerializer):
         ]
 
         read_only_fields = [
+            "id",
             "username",
             "email",
         ]
@@ -153,16 +162,34 @@ class MeSerializer(serializers.ModelSerializer):
         if "bio" in profile_data:
             profile.bio = profile_data["bio"]
 
-        if "profile_picture" in profile_data:
-            profile.profile_picture = profile_data["profile_picture"]
-
         # Multipart values take precedence
         if bio is not None:
             profile.bio = bio
 
+        # Upload profile picture to Cloudinary (or local fallback)
         if profile_picture is not None:
-            profile.profile_picture = profile_picture
+            url = upload_profile_picture(profile_picture)
+            profile.profile_picture = url
+        elif "profile_picture" in profile_data:
+            url = upload_profile_picture(profile_data["profile_picture"])
+            profile.profile_picture = url
 
         profile.save()
+        instance.refresh_from_db()
 
         return instance
+
+
+
+class UserSearchSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "profile",
+        ]
