@@ -9,6 +9,9 @@ const api = axios.create({
 
 let refreshPromise = null;
 
+import { store } from "../app/store";
+import { setAccessToken } from "../features/auth/authSlice";
+
 const refreshAccessToken = async () => {
   const refreshToken =
     localStorage.getItem("refresh_token");
@@ -42,6 +45,8 @@ const refreshAccessToken = async () => {
       newRefreshToken,
     );
   }
+
+  store.dispatch(setAccessToken(newAccessToken));
 
   return newAccessToken;
 };

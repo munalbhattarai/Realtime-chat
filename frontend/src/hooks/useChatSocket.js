@@ -333,14 +333,16 @@ const useChatSocket = (
   );
 
 
+  const effectiveToken = token || localStorage.getItem("access_token");
+
   useEffect(() => {
-    if (!conversationId || !token) {
+    if (!conversationId || !effectiveToken) {
       return;
     }
 
     const socket = new ChatWebSocket({
       conversationId,
-      token,
+      token: effectiveToken,
 
       onOpen: () => {
         setConnectionState("connected");
@@ -374,7 +376,7 @@ const useChatSocket = (
 
       setConnectionState("disconnected");
     };
-  }, [conversationId, token, handleMessage]);
+  }, [conversationId, effectiveToken, handleMessage]);
 
   // ── Typing auto-expiry timer ────────────────────────
   useEffect(() => {
