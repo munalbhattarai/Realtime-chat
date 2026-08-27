@@ -5,7 +5,7 @@
  * Contains: incoming call screen, calling screen, connected view,
  * error/rejected/busy toasts, and call controls.
  */
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import "./VideoCall.css";
 
 // ── SVG icon helpers ─────────────────────────────────────────────────
@@ -72,8 +72,8 @@ const VideoCallOverlay = ({
   isCameraOff,
   callDuration,
   errorMessage,
-  localVideoRef,
-  remoteVideoRef,
+  localStream,
+  remoteStream,
   onAccept,
   onReject,
   onEnd,
@@ -81,12 +81,49 @@ const VideoCallOverlay = ({
   onToggleCamera,
   onDismiss,
 }) => {
-  // Auto-dismiss ended/rejected/busy after 3 seconds
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+
+  // Attach local stream to local video element
+  useEffect(() => {
+    const videoEl = localVideoRef.current;
+    if (videoEl) {
+      if (localStream) {
+        if (videoEl.srcObject !== localStream) {
+          videoEl.srcObject = localStream;
+        }
+        videoEl.play().catch((err) => {
+          console.warn("Local video play notice:", err?.message || err);
+        });
+      } else {
+        videoEl.srcObject = null;
+      }
+    }
+  }, [localStream, callState, isCameraOff]);
+
+  // Attach remote stream to remote video element
+  useEffect(() => {
+    const videoEl = remoteVideoRef.current;
+    if (videoEl) {
+      if (remoteStream) {
+        if (videoEl.srcObject !== remoteStream) {
+          videoEl.srcObject = remoteStream;
+        }
+        videoEl.play().catch((err) => {
+          console.warn("Remote video play notice:", err?.message || err);
+        });
+      } else {
+        videoEl.srcObject = null;
+      }
+    }
+  }, [remoteStream, callState]);
+
+  // Auto-dismiss ended/rejected/busy after 3.5 seconds
   useEffect(() => {
     if (callState === "ended" || callState === "rejected" || callState === "busy" || callState === "failed") {
       const timer = setTimeout(() => {
         onDismiss?.();
-      }, 3000);
+      }, 3500);
       return () => clearTimeout(timer);
     }
   }, [callState, onDismiss]);
@@ -118,7 +155,7 @@ const VideoCallOverlay = ({
 
   if (callState === "idle") return null;
 
-  const displayName = callerInfo?.caller_username || otherUserName || "User";
+  const displayName = callerInfo?.caller_username || otherUserName || "Ally";
   const avatarLetter = displayName.charAt(0).toUpperCase();
 
   // ── Incoming call ───────────────────────────────────────
@@ -179,7 +216,7 @@ const VideoCallOverlay = ({
         <div className="vc-signal-card">
           <div className="vc-connecting">
             <div className="vc-spinner" />
-            <span className="vc-connecting-text">Establishing connection…</span>
+            <span className="vc-connecting-text">Establishing web connection…</span>
           </div>
         </div>
       </div>
@@ -197,22 +234,21 @@ const VideoCallOverlay = ({
             <span className="vc-time">{formatDuration(callDuration)}</span>
           </div>
 
-          {/* Remote video */}
+          {/* Remote video (unmuted to hear remote audio) */}
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="vc-remote-video"
-            style={{ display: remoteVideoRef?.current?.srcObject ? "block" : "none" }}
+            className={`vc-remote-video ${remoteStream ? "block" : "hidden"}`}
           />
 
-          {/* Remote placeholder when no video */}
-          {!remoteVideoRef?.current?.srcObject && (
+          {/* Remote placeholder when waiting for remote video */}
+          {!remoteStream && (
             <div className="vc-remote-placeholder">
               <div className="vc-avatar-large">
                 <span>{avatarLetter}</span>
               </div>
-              <span className="vc-remote-label">Camera off</span>
+              <span className="vc-remote-label">Connecting media…</span>
             </div>
           )}
 
@@ -223,7 +259,14 @@ const VideoCallOverlay = ({
                 <span>You</span>
               </div>
             ) : (
-              <video ref={localVideoRef} autoPlay playsInline muted />
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+                style={{ transform: "scaleX(-1)" }}
+              />
             )}
           </div>
 
@@ -254,12 +297,12 @@ const VideoCallOverlay = ({
 
   // ── Ended / Rejected / Busy / Failed ────────────────────
   const toastConfig = {
-    ended: { title: "Call Ended", message: "The call has ended.", icon: "info" },
-    rejected: { title: "Call Rejected", message: "The other user declined the call.", icon: "info" },
+    ended: { title: "Call Ended", message: "The web call has ended.", icon: "info" },
+    rejected: { title: "Call Declined", message: "The other user declined the call.", icon: "info" },
     busy: { title: "User Busy", message: "The other user is currently in another call.", icon: "info" },
     failed: {
-      title: "Call Failed",
-      message: errorMessage || "The connection could not be established.",
+      title: "Call Disconnected",
+      message: errorMessage || "The media connection could not be established.",
       icon: "error",
     },
   };

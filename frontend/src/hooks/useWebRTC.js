@@ -31,6 +31,8 @@ export default function useWebRTC({ socketRef, currentUserId }) {
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [localStream, setLocalStream] = useState(null);
+  const [remoteStream, setRemoteStream] = useState(null);
 
   // ── Refs ────────────────────────────────────────────────────────────
   const peerConnectionRef = useRef(null);
@@ -114,6 +116,8 @@ export default function useWebRTC({ socketRef, currentUserId }) {
       clearTimers();
       stopLocalMedia();
       closePeerConnection();
+      setLocalStream(null);
+      setRemoteStream(null);
       setCallState(newState);
       setCallId(null);
       setCallConversationId(null);
@@ -145,13 +149,19 @@ export default function useWebRTC({ socketRef, currentUserId }) {
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+          facingMode: "user",
+        },
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
       });
       localStreamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+      setLocalStream(stream);
       return stream;
     } catch (err) {
       if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
@@ -177,36 +187,53 @@ export default function useWebRTC({ socketRef, currentUserId }) {
           sendSignal("call.ice_candidate", {
             call_id: currentCallId,
             conversation_id: conversationId,
-            candidate: event.candidate.toJSON(),
+            candidate: event.candidate.toJSON ? event.candidate.toJSON() : event.candidate,
           });
         }
       };
 
       pc.ontrack = (event) => {
+        let stream = null;
         if (event.streams && event.streams[0]) {
-          remoteStreamRef.current = event.streams[0];
-          if (remoteVideoRef.current) {
-            remoteVideoRef.current.srcObject = event.streams[0];
+          stream = event.streams[0];
+        } else if (event.track) {
+          if (!remoteStreamRef.current) {
+            remoteStreamRef.current = new MediaStream();
           }
+          remoteStreamRef.current.addTrack(event.track);
+          stream = remoteStreamRef.current;
+        }
+
+        if (stream) {
+          remoteStreamRef.current = stream;
+          setRemoteStream(stream);
         }
       };
 
-      pc.oniceconnectionstatechange = () => {
-        const state = pc.iceConnectionState;
-        if (state === "connected" || state === "completed") {
+      const handleStateChange = () => {
+        const iceState = pc.iceConnectionState;
+        const connState = pc.connectionState;
+
+        if (
+          connState === "connected" ||
+          iceState === "connected" ||
+          iceState === "completed"
+        ) {
           setCallState("connected");
           startDurationTimer();
-        } else if (state === "failed") {
+        } else if (connState === "failed" || iceState === "failed") {
           setErrorMessage("Connection failed. The other user may be behind a restrictive firewall.");
           sendSignal("call.end", {
             call_id: currentCallId,
             conversation_id: conversationId,
           });
           cleanup("failed");
-        } else if (state === "disconnected") {
-          // Might recover — wait briefly before treating as failure
+        } else if (connState === "disconnected" || iceState === "disconnected") {
           setTimeout(() => {
-            if (peerConnectionRef.current?.iceConnectionState === "disconnected") {
+            if (
+              peerConnectionRef.current?.connectionState === "disconnected" ||
+              peerConnectionRef.current?.iceConnectionState === "disconnected"
+            ) {
               sendSignal("call.end", {
                 call_id: currentCallId,
                 conversation_id: conversationId,
@@ -216,6 +243,9 @@ export default function useWebRTC({ socketRef, currentUserId }) {
           }, 5000);
         }
       };
+
+      pc.oniceconnectionstatechange = handleStateChange;
+      pc.onconnectionstatechange = handleStateChange;
 
       peerConnectionRef.current = pc;
       return pc;
@@ -397,7 +427,10 @@ export default function useWebRTC({ socketRef, currentUserId }) {
             });
 
             // Create and send offer
-            const offer = await pc.createOffer();
+            const offer = await pc.createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: true,
+            });
             await pc.setLocalDescription(offer);
             sendSignal("call.offer", {
               call_id,
@@ -587,6 +620,10 @@ export default function useWebRTC({ socketRef, currentUserId }) {
     isCameraOff,
     callDuration,
     errorMessage,
+
+    // Stream states
+    localStream,
+    remoteStream,
 
     // Refs for video elements
     localVideoRef,

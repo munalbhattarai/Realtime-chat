@@ -419,8 +419,8 @@ const ChatWindow = () => {
         isCameraOff={webrtc.isCameraOff}
         callDuration={webrtc.callDuration}
         errorMessage={webrtc.errorMessage}
-        localVideoRef={webrtc.localVideoRef}
-        remoteVideoRef={webrtc.remoteVideoRef}
+        localStream={webrtc.localStream}
+        remoteStream={webrtc.remoteStream}
         onAccept={webrtc.acceptCall}
         onReject={webrtc.rejectCall}
         onEnd={webrtc.endCall}
