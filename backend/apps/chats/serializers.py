@@ -103,6 +103,21 @@ class PrivateConversationCreateSerializer(serializers.Serializer):
                 }
             )
 
+        # Check if users are accepted friends
+        from apps.accounts.models import FriendRequest
+        from django.db.models import Q
+        is_friend = FriendRequest.objects.filter(
+            (Q(sender=request.user, receiver=attrs["user"]) | Q(sender=attrs["user"], receiver=request.user)),
+            status=FriendRequest.RequestStatus.ACCEPTED
+        ).exists()
+
+        if not is_friend:
+            raise serializers.ValidationError(
+                {
+                    "user_id": "You must send an add request and have it accepted before starting a private conversation."
+                }
+            )
+
         return attrs
 
     def create(self, validated_data):

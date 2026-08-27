@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useConversations } from "../../hooks/useConversations";
 import ConversationItem from "./ConversationItem";
@@ -6,6 +6,7 @@ import NewConversationModal from "./NewConversationModal";
 import ProfileModal from "./ProfileModal";
 import { useAuth } from "../../hooks/useAuth";
 import { getMediaUrl } from "../../services/api";
+import { getFriendRequests } from "../../features/auth/authApi";
 import SpideyLogo from "../common/SpideyLogo";
 
 const ConversationSidebar = () => {
@@ -22,30 +23,57 @@ const ConversationSidebar = () => {
   } = useConversations();
 
   const [isNewChatModalOpen, setIsNewChatModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState("add");
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  const fetchPendingRequests = useCallback(async () => {
+    try {
+      const data = await getFriendRequests();
+      setPendingRequestsCount(data.pending_count || data.received?.length || 0);
+    } catch (err) {
+      // Ignore network errors on background poll
+    }
+  }, []);
 
   useEffect(() => {
     fetchAll();
+    fetchPendingRequests();
 
     const handleFocus = () => {
+      fetchAll();
+      fetchPendingRequests();
+    };
+
+    const handleFriendRequestUpdate = () => {
+      fetchPendingRequests();
       fetchAll();
     };
 
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("friend_request_update", handleFriendRequestUpdate);
+
     const interval = setInterval(() => {
       fetchAll();
-    }, 10000);
+      fetchPendingRequests();
+    }, 12000);
 
     return () => {
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("friend_request_update", handleFriendRequestUpdate);
       clearInterval(interval);
     };
-  }, [fetchAll]);
+  }, [fetchAll, fetchPendingRequests]);
+
+  const openNewChatModal = (tab = "add") => {
+    setModalInitialTab(tab);
+    setIsNewChatModalOpen(true);
+  };
 
   return (
     <aside className="flex h-full w-full flex-col border-r border-red-950/40 spidey-sidebar-bg md:w-80 lg:w-96 relative">
       {/* Header */}
-      <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-red-900/20 bg-slate-950/70 px-6 backdrop-blur-md z-10">
+      <header className="flex h-[73px] shrink-0 items-center justify-between border-b border-red-900/20 bg-slate-950/70 px-5 sm:px-6 backdrop-blur-md z-10">
         <div className="flex items-center gap-2.5">
           <SpideyLogo size={32} />
           <div>
@@ -55,15 +83,31 @@ const ConversationSidebar = () => {
             <p className="text-[10px] text-blue-400/80 font-medium tracking-wide">WEB-NET SECURE</p>
           </div>
         </div>
-        <button 
-          onClick={() => setIsNewChatModalOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md shadow-red-950/60 ring-2 ring-red-500/40 transition hover:from-red-500 hover:to-blue-600 hover:shadow-blue-900/50 hover:scale-105 active:scale-95 cursor-pointer"
-          aria-label="New chat"
-          title="New Web-Chat"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
+        <div className="flex items-center gap-2">
+          {pendingRequestsCount > 0 && (
+            <button
+              onClick={() => openNewChatModal("requests")}
+              className="relative flex h-9 items-center gap-1.5 rounded-full bg-red-950/70 border border-red-500/50 px-3 text-xs font-bold text-red-300 shadow-[0_0_12px_rgba(239,68,68,0.4)] transition hover:bg-red-900/60 hover:scale-105 active:scale-95 cursor-pointer"
+              title="Pending Add Requests"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5">
+                <path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <span>{pendingRequestsCount}</span>
+            </button>
+          )}
+
+          <button 
+            onClick={() => openNewChatModal("add")}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md shadow-red-950/60 ring-2 ring-red-500/40 transition hover:from-red-500 hover:to-blue-600 hover:shadow-blue-900/50 hover:scale-105 active:scale-95 cursor-pointer"
+            aria-label="New web link"
+            title="Add Ally / New Web-Chat"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
       </header>
+
 
       {/* Conversation List */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden p-3">
@@ -162,6 +206,7 @@ const ConversationSidebar = () => {
       <NewConversationModal 
         isOpen={isNewChatModalOpen} 
         onClose={() => setIsNewChatModalOpen(false)} 
+        initialTab={modalInitialTab}
       />
 
       <ProfileModal

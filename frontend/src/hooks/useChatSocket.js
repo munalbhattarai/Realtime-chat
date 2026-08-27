@@ -22,7 +22,6 @@ import {
 
 import { ChatWebSocket } from "../services/websocket";
 import {
-  updateConversationMember,
   bumpConversationToTop,
   updateMemberAcrossAllConversations,
   addOrUpdateConversation,
@@ -343,6 +342,52 @@ const useChatSocket = (
               })
             );
           }
+          break;
+        }
+
+        case "friend_request.received": {
+          const req = event.request;
+          const senderUsername = req?.sender?.username || "An ally";
+          window.dispatchEvent(new CustomEvent("friend_request_update"));
+          window.dispatchEvent(
+            new CustomEvent("spidey_toast", {
+              detail: {
+                title: "New Add Request",
+                message: `@${senderUsername} sent you a Web-Net Add Request!`,
+                type: "info",
+              },
+            })
+          );
+          break;
+        }
+
+        case "friend_request.accepted": {
+          const req = event.request;
+          const allyName = req?.receiver?.username || req?.sender?.username || "Ally";
+          window.dispatchEvent(new CustomEvent("friend_request_update"));
+          window.dispatchEvent(
+            new CustomEvent("spidey_toast", {
+              detail: {
+                title: "Web Link Established",
+                message: `You and @${allyName} are now connected allies!`,
+                type: "success",
+              },
+            })
+          );
+          if (event.conversation) {
+            dispatch(addOrUpdateConversation(event.conversation));
+          }
+          getConversations()
+            .then((data) => {
+              dispatch(fetchConversationsSuccess(data.results ?? data));
+            })
+            .catch(() => {});
+          break;
+        }
+
+        case "friend_request.rejected":
+        case "friend_request.cancelled": {
+          window.dispatchEvent(new CustomEvent("friend_request_update"));
           break;
         }
 

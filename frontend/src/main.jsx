@@ -5,6 +5,7 @@ import { Provider } from "react-redux";
 
 import App from "./app/App";
 import { store } from "./app/store";
+import { ToastProvider } from "./components/common/ToastContext";
 
 import "./index.css";
 
@@ -14,8 +15,10 @@ ReactDOM.createRoot(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <App />
+        <ToastProvider>
+          <App />
+        </ToastProvider>
       </BrowserRouter>
     </Provider>
   </React.StrictMode>,
-);
+);

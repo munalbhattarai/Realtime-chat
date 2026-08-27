@@ -79,3 +79,32 @@ export const searchUsers = async (query) => {
 
   return response.data;
 };
+
+export const getFriendRequests = async () => {
+  const response = await api.get("/accounts/friend-requests/");
+  return response.data;
+};
+
+export const sendFriendRequest = async ({ userId, username }) => {
+  const payload = {};
+  if (userId) payload.user_id = userId;
+  if (username) payload.username = username;
+
+  const response = await api.post("/accounts/friend-requests/", payload);
+  return response.data;
+};
+
+export const acceptFriendRequest = async (requestId) => {
+  const response = await api.post(`/accounts/friend-requests/${requestId}/accept/`);
+  return response.data;
+};
+
+export const rejectFriendRequest = async (requestId) => {
+  const response = await api.post(`/accounts/friend-requests/${requestId}/reject/`);
+  return response.data;
+};
+
+export const cancelFriendRequest = async (requestId) => {
+  const response = await api.delete(`/accounts/friend-requests/${requestId}/cancel/`);
+  return response.data;
+};

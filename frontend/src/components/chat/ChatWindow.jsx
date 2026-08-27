@@ -17,10 +17,16 @@ import { getMediaUrl } from "../../services/api";
 import { uploadMessageImage } from "../../features/messages/messageApi";
 import UserProfileModal from "./UserProfileModal";
 import SpideyLogo from "../common/SpideyLogo";
+import ConfirmModal from "../common/ConfirmModal";
+import { useToast } from "../common/ToastContext";
 
 const ChatWindow = () => {
   const dispatch = useDispatch();
+  const { showSuccess, showError } = useToast();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const activeConversationId = useSelector(
     (state) =>
@@ -101,29 +107,36 @@ const ChatWindow = () => {
     dispatch(setActiveConversation(null));
   };
 
-  const handleDeleteConversation = async () => {
+  const handleConfirmDeleteConversation = async () => {
     if (!activeConversationId) return;
-    if (window.confirm("Are you sure you want to sever this web connection?")) {
-      try {
-        await deleteConversation(activeConversationId);
-        dispatch(removeConversation(activeConversationId));
-      } catch (err) {
-        console.error("Failed to delete conversation", err);
-      }
+    setIsActionLoading(true);
+    try {
+      await deleteConversation(activeConversationId);
+      dispatch(removeConversation(activeConversationId));
+      showSuccess("Web link severed.");
+      setIsDeleteModalOpen(false);
+    } catch (err) {
+      showError("Failed to delete conversation.");
+    } finally {
+      setIsActionLoading(false);
     }
   };
 
-  const handleLeaveGroup = async () => {
+  const handleConfirmLeaveGroup = async () => {
     if (!activeConversationId) return;
-    if (window.confirm("Are you sure you want to leave this web group?")) {
-      try {
-        await leaveGroupConversation(activeConversationId);
-        dispatch(removeConversation(activeConversationId));
-      } catch (err) {
-        console.error("Failed to leave group", err);
-      }
+    setIsActionLoading(true);
+    try {
+      await leaveGroupConversation(activeConversationId);
+      dispatch(removeConversation(activeConversationId));
+      showSuccess("Successfully left the group.");
+      setIsLeaveModalOpen(false);
+    } catch (err) {
+      showError("Failed to leave group.");
+    } finally {
+      setIsActionLoading(false);
     }
   };
+
 
   const members = conversation.members ?? [];
 
@@ -201,7 +214,7 @@ const ChatWindow = () => {
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {conversation.type === "GROUP" ? (
             <button
-              onClick={handleLeaveGroup}
+              onClick={() => setIsLeaveModalOpen(true)}
               title="Leave Group"
               className="flex h-8 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-xl border border-red-500/30 bg-red-950/30 px-2.5 sm:px-3 text-xs font-bold text-red-400 hover:bg-red-900/50 transition cursor-pointer shadow-sm active:scale-95"
             >
@@ -210,7 +223,7 @@ const ChatWindow = () => {
             </button>
           ) : (
             <button
-              onClick={handleDeleteConversation}
+              onClick={() => setIsDeleteModalOpen(true)}
               title="Delete Conversation"
               className="flex h-8 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-xl border border-red-500/30 bg-red-950/30 px-2.5 sm:px-3 text-xs font-bold text-red-400 hover:bg-red-900/50 transition cursor-pointer shadow-sm active:scale-95"
             >
@@ -261,6 +274,32 @@ const ChatWindow = () => {
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
         user={otherMember}
+      />
+
+      {/* Sever Conversation Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDeleteConversation}
+        isLoading={isActionLoading}
+        title="Sever Web Link"
+        message="Are you sure you want to sever this web connection? This conversation will be removed from your active web."
+        confirmText="Sever Connection"
+        cancelText="Keep Connected"
+        isDanger={true}
+      />
+
+      {/* Leave Group Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        onConfirm={handleConfirmLeaveGroup}
+        isLoading={isActionLoading}
+        title="Leave Web Alliance"
+        message="Are you sure you want to leave this web alliance group? You will no longer receive updates from this alliance."
+        confirmText="Leave Alliance"
+        cancelText="Stay in Alliance"
+        isDanger={true}
       />
     </section>
   );

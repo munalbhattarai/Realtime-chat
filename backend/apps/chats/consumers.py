@@ -465,6 +465,62 @@ class ChatConsumer(
             }
         )
 
+    async def friend_request_received(
+        self,
+        event,
+    ):
+        await self.send_json(
+            {
+                "type": "friend_request.received",
+                "request": event.get("request"),
+            }
+        )
+
+    async def friend_request_accepted(
+        self,
+        event,
+    ):
+        conv_data = event.get("conversation")
+        if conv_data and conv_data.get("id"):
+            try:
+                await self.channel_layer.group_add(
+                    f"conversation_{conv_data['id']}",
+                    self.channel_name,
+                )
+            except Exception as e:
+                print(f"Error subscribing to accepted friend conversation group: {e}")
+
+        await self.send_json(
+            {
+                "type": "friend_request.accepted",
+                "request": event.get("request"),
+                "conversation": conv_data,
+            }
+        )
+
+    async def friend_request_rejected(
+        self,
+        event,
+    ):
+        await self.send_json(
+            {
+                "type": "friend_request.rejected",
+                "request_id": event.get("request_id"),
+            }
+        )
+
+    async def friend_request_cancelled(
+        self,
+        event,
+    ):
+        await self.send_json(
+            {
+                "type": "friend_request.cancelled",
+                "request_id": event.get("request_id"),
+            }
+        )
+
+
     async def presence_update(
         self,
         event,

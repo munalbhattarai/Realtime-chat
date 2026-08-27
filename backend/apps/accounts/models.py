@@ -32,3 +32,45 @@ class Profile(models.Model):
             return self.profile_picture.url
         except Exception:
             return None
+
+
+class FriendRequest(models.Model):
+    class RequestStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        ACCEPTED = "ACCEPTED", "Accepted"
+        REJECTED = "REJECTED", "Rejected"
+
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="sent_friend_requests",
+    )
+    receiver = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="received_friend_requests",
+    )
+    status = models.CharField(
+        max_length=10,
+        choices=RequestStatus.choices,
+        default=RequestStatus.PENDING,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sender", "receiver"],
+                name="unique_sender_receiver_friend_request",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["sender", "status"]),
+            models.Index(fields=["receiver", "status"]),
+        ]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.sender.username} -> {self.receiver.username} ({self.status})"

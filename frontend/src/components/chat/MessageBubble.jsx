@@ -1,6 +1,8 @@
-import { memo, useState } from "react";
+import { memo, useState, useRef, useEffect } from "react";
 import ImageModal from "./ImageModal";
 import { getMediaUrl } from "../../services/api";
+import { useToast } from "../common/ToastContext";
+import ConfirmModal from "../common/ConfirmModal";
 
 const MessageBubble = memo(({
   message,
@@ -10,10 +12,31 @@ const MessageBubble = memo(({
   onRetry,
   isGroup = false,
 }) => {
+  const { showSuccess } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  // Close menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    if (isMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [isMenuOpen]);
 
   const readBy = Object.values(
     message.readBy ?? {},
@@ -36,6 +59,7 @@ const MessageBubble = memo(({
     e.preventDefault();
     if (editContent.trim() && editContent !== message.content) {
       await onEdit(editContent.trim());
+      showSuccess("Message updated");
     }
     setIsEditing(false);
   };
@@ -51,45 +75,121 @@ const MessageBubble = memo(({
     }
   };
 
+  const handleCopyText = async () => {
+    if (!message.content) return;
+    try {
+      await navigator.clipboard.writeText(message.content);
+      showSuccess("Message copied to clipboard!");
+    } catch {
+      // Fallback
+    }
+    setIsMenuOpen(false);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleteModalOpen(false);
+    setIsMenuOpen(false);
+    await onDelete();
+    showSuccess("Message deleted");
+  };
+
   return (
     <>
       <div
         data-message-id={message.id}
         className={["flex group mb-2.5", isOwn ? "justify-end" : "justify-start"].join(" ")}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={() => isOwn && setIsHovered((prev) => !prev)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          if (!isMenuOpen) setIsHovered(false);
+        }}
       >
         <div className={["relative flex flex-col max-w-[88%] sm:max-w-[75%]", isOwn ? "items-end" : "items-start"].join(" ")}>
-          {/* Actions Menu */}
-          {isOwn && !isEditing && !isSending && !isFailed && (
-            <div className={["absolute -top-3.5 right-2 sm:right-4 flex items-center gap-1 rounded-lg border border-red-500/40 bg-slate-950/95 p-1 shadow-lg transition-opacity duration-200 z-10 backdrop-blur-md", isHovered ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"].join(" ")}>
-              {message.content && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                  className="rounded p-1 text-slate-400 hover:bg-slate-800 hover:text-white transition active:scale-95"
-                  aria-label="Edit message"
-                  title="Edit"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
-                </button>
-              )}
+          {/* 3-Dots Actions Menu */}
+          {!isEditing && !isSending && !isFailed && (
+            <div
+              ref={menuRef}
+              className={[
+                "absolute -top-3 flex items-center z-20 transition-opacity duration-200",
+                isOwn ? "right-2" : "left-2",
+                isHovered || isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none sm:group-hover:opacity-100",
+              ].join(" ")}
+            >
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete();
+                  setIsMenuOpen((prev) => !prev);
                 }}
-                className="rounded p-1 text-red-400 hover:bg-red-900/40 hover:text-red-300 transition active:scale-95"
-                aria-label="Delete message"
-                title="Delete"
+                className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-950/95 border border-red-500/40 text-slate-300 hover:text-white hover:bg-slate-900 shadow-md backdrop-blur-md transition active:scale-95 cursor-pointer"
+                aria-label="Message options"
+                title="Options"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-3.5 w-3.5">
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="6" cy="12" r="1.5"></circle>
+                  <circle cx="18" cy="12" r="1.5"></circle>
+                </svg>
               </button>
+
+              {/* Dropdown Menu */}
+              {isMenuOpen && (
+                <div
+                  className={[
+                    "absolute top-7 w-36 rounded-2xl border border-red-900/40 bg-slate-950/95 p-1.5 shadow-[0_0_20px_rgba(220,38,38,0.25)] backdrop-blur-xl animate-fadeIn z-30",
+                    isOwn ? "right-0" : "left-0",
+                  ].join(" ")}
+                >
+                  {message.content && (
+                    <button
+                      onClick={handleCopyText}
+                      className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
+                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                      </svg>
+                      <span>Copy text</span>
+                    </button>
+                  )}
+
+                  {isOwn && message.content && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        setIsEditing(true);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-900 hover:text-white transition cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                      </svg>
+                      <span>Edit</span>
+                    </button>
+                  )}
+
+                  {isOwn && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMenuOpen(false);
+                        setIsDeleteModalOpen(true);
+                      }}
+                      className="flex w-full items-center gap-2 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-950/50 hover:text-red-300 transition cursor-pointer border-t border-slate-900 mt-1"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-400">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                      <span>Delete</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
+
 
           <div
             className={[
@@ -247,8 +347,20 @@ const MessageBubble = memo(({
         onClose={() => setIsImageModalOpen(false)}
         imageUrl={imageUrl}
       />
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Delete Message"
+        message="Are you sure you want to delete this message? This action will remove it for everyone in the conversation."
+        confirmText="Delete Message"
+        cancelText="Keep Message"
+        isDanger={true}
+      />
     </>
   );
+
 }, (prevProps, nextProps) => {
   // Custom comparator — only re-render when relevant props change
   return (

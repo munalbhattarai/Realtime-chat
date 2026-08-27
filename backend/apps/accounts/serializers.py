@@ -1,11 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.db import transaction
+from django.db import models, transaction
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
-from .models import Profile
+from .models import Profile, FriendRequest
 from .services import upload_profile_picture
 
 
@@ -180,8 +180,61 @@ class MeSerializer(serializers.ModelSerializer):
         return instance
 
 
-
 class UserSearchSerializer(serializers.ModelSerializer):
+    profile = ProfileSerializer(read_only=True)
+    friendship_status = serializers.SerializerMethodField()
+    friend_request_id = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "profile",
+            "friendship_status",
+            "friend_request_id",
+        ]
+
+    def _get_friend_request(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        
+        current_user = request.user
+        # Look for existing request in either direction
+        return FriendRequest.objects.filter(
+            (models.Q(sender=current_user, receiver=obj) | models.Q(sender=obj, receiver=current_user))
+        ).order_by("-updated_at").first()
+
+    def get_friendship_status(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return "NONE"
+
+        current_user = request.user
+        req = self._get_friend_request(obj)
+        if not req:
+            return "NONE"
+
+        if req.status == FriendRequest.RequestStatus.ACCEPTED:
+            return "ACCEPTED"
+        elif req.status == FriendRequest.RequestStatus.PENDING:
+            if req.sender_id == current_user.id:
+                return "PENDING_SENT"
+            else:
+                return "PENDING_RECEIVED"
+        elif req.status == FriendRequest.RequestStatus.REJECTED:
+            return "REJECTED"
+        return "NONE"
+
+    def get_friend_request_id(self, obj):
+        req = self._get_friend_request(obj)
+        return req.id if req else None
+
+
+class FriendRequestUserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
 
     class Meta:
@@ -193,3 +246,21 @@ class UserSearchSerializer(serializers.ModelSerializer):
             "last_name",
             "profile",
         ]
+
+
+class FriendRequestSerializer(serializers.ModelSerializer):
+    sender = FriendRequestUserSerializer(read_only=True)
+    receiver = FriendRequestUserSerializer(read_only=True)
+
+    class Meta:
+        model = FriendRequest
+        fields = [
+            "id",
+            "sender",
+            "receiver",
+            "status",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "status", "created_at", "updated_at"]
+
