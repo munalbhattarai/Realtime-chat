@@ -192,8 +192,9 @@ const MessageBubble = memo(({
 
 
           <div
+            onClick={() => setIsHovered((prev) => !prev)}
             className={[
-              "rounded-2xl shadow-md relative overflow-hidden transition-all duration-200 backdrop-blur-sm",
+              "rounded-2xl shadow-md relative overflow-hidden transition-all duration-200 backdrop-blur-sm cursor-pointer sm:cursor-default",
               isOwn
                 ? "rounded-br-sm bg-gradient-to-r from-red-600 via-red-700 to-rose-700 text-white shadow-[0_4px_15px_rgba(220,38,38,0.35)] border border-red-500/30"
                 : "rounded-bl-sm bg-slate-950/85 border border-blue-500/30 text-slate-100 shadow-[0_4px_15px_rgba(37,99,235,0.25)]",

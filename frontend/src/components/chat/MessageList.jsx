@@ -398,7 +398,7 @@ const MessageList = ({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto px-5 py-6"
+        className="h-full overflow-y-auto px-3 sm:px-5 py-4 sm:py-6"
       >
         {isLoadingMore && (
           <div className="mb-4 flex justify-center">

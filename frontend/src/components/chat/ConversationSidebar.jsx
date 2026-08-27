@@ -164,7 +164,7 @@ const ConversationSidebar = () => {
       </div>
 
       {/* User Profile Footer */}
-      <footer className="mt-auto border-t border-red-900/20 bg-slate-950/80 p-4 backdrop-blur-md">
+      <footer className="mt-auto border-t border-red-900/20 bg-slate-950/80 p-3 sm:p-4 pb-safe backdrop-blur-md">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsProfileModalOpen(true)}
