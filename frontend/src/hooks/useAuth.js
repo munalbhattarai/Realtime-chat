@@ -13,6 +13,7 @@ import {
   loginUser,
   registerUser,
   logoutUser,
+  googleAuthUser,
 } from "../features/auth/authApi";
 
 export const useAuth = () => {
@@ -37,6 +38,26 @@ export const useAuth = () => {
       const message =
         error.response?.data?.detail ||
         "Login failed.";
+
+      dispatch(authFailure(message));
+
+      throw error;
+    }
+  };
+
+  const loginWithGoogle = async (credential) => {
+    dispatch(authStart());
+
+    try {
+      const data = await googleAuthUser({ credential });
+
+      dispatch(loginSuccess(data));
+
+      return data;
+    } catch (error) {
+      const message =
+        error.response?.data?.detail ||
+        "Google authentication failed.";
 
       dispatch(authFailure(message));
 
@@ -97,6 +118,7 @@ export const useAuth = () => {
   return {
     ...auth,
     login,
+    loginWithGoogle,
     register,
     fetchCurrentUser,
     logout,

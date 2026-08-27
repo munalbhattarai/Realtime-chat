@@ -147,19 +147,35 @@ export default function useWebRTC({ socketRef, currentUserId }) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error("Your browser does not support video calling.");
     }
+
+    // High-definition 16:9 uncropped camera constraints
+    const hdConstraints = {
+      video: {
+        width: { ideal: 1920, min: 640 },
+        height: { ideal: 1080, min: 480 },
+        frameRate: { ideal: 30, max: 60 },
+        facingMode: "user",
+        aspectRatio: { ideal: 1.7777777778 },
+      },
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+    };
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: "user",
-        },
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-      });
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(hdConstraints);
+      } catch (hdErr) {
+        console.warn("HD camera constraints unavailable, using standard constraints:", hdErr);
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      }
+
       localStreamRef.current = stream;
       setLocalStream(stream);
       return stream;

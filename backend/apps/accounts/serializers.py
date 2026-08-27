@@ -264,3 +264,11 @@ class FriendRequestSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "status", "created_at", "updated_at"]
 
+
+class GoogleAuthSerializer(serializers.Serializer):
+    credential = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        help_text="Google OAuth2 / OpenID Connect ID token credential from Google Identity Services.",
+    )
+

@@ -10,9 +10,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(5, 7, 20, 0.92);
-  backdrop-filter: blur(12px);
+  background: rgba(5, 7, 20, 0.94);
+  backdrop-filter: blur(14px);
   animation: vcFadeIn 0.25s ease-out;
+  overflow: hidden;
+  user-select: none;
 }
 
 /* ── Incoming / Calling card ─────────────────────────────── */
@@ -22,13 +24,13 @@
   align-items: center;
   gap: 1.25rem;
   padding: 2.5rem 2rem;
-  border-radius: 1.5rem;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
+  border-radius: 1.75rem;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(24px);
   box-shadow:
-    0 0 40px rgba(239, 68, 68, 0.15),
-    0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    0 0 50px rgba(239, 68, 68, 0.2),
+    0 25px 50px -12px rgba(0, 0, 0, 0.6);
   max-width: 340px;
   width: 90vw;
   text-align: center;
@@ -99,6 +101,8 @@
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
   color: #fff;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .vc-btn:active {
@@ -152,16 +156,42 @@
   align-items: center;
   justify-content: center;
   background: #020617;
+  overflow: hidden;
 }
 
-.vc-remote-video {
+/* Ambient glow from video stream to avoid dark borders */
+.vc-ambient-glow {
+  position: absolute;
+  inset: -20px;
+  width: calc(100% + 40px);
+  height: calc(100% + 40px);
+  object-fit: cover;
+  filter: blur(40px) brightness(0.65);
+  opacity: 0.5;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Main active video */
+.vc-main-video {
+  position: relative;
   width: 100%;
   height: 100%;
+  z-index: 2;
+  transition: object-fit 0.25s ease;
+}
+
+.vc-main-video.fit-contain {
+  object-fit: contain;
+}
+
+.vc-main-video.fit-cover {
   object-fit: cover;
-  background: #0f172a;
 }
 
 .vc-remote-placeholder {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -169,7 +199,7 @@
   gap: 1rem;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.6) 0%, rgba(2, 6, 23, 0.95) 100%);
 }
 
 .vc-remote-placeholder .vc-avatar-large {
@@ -180,7 +210,8 @@
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #1e293b, #334155);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+  box-shadow: 0 0 35px rgba(239, 68, 68, 0.25);
+  border: 2px solid rgba(239, 68, 68, 0.4);
 }
 
 .vc-remote-placeholder .vc-avatar-large span {
@@ -191,29 +222,51 @@
 
 .vc-remote-placeholder .vc-remote-label {
   font-size: 0.85rem;
-  color: #64748b;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
-/* ── Local video (PiP corner) ────────────────────────────── */
+/* ── Floating Draggable PiP (Local / Self Video) ──────────── */
 .vc-local-pip {
   position: absolute;
-  bottom: calc(92px + env(safe-area-inset-bottom, 0px));
-  right: max(12px, env(safe-area-inset-right, 12px));
-  width: 120px;
-  height: 90px;
-  border-radius: 12px;
+  width: 130px;
+  height: 98px;
+  border-radius: 16px;
   overflow: hidden;
-  border: 2px solid rgba(239, 68, 68, 0.4);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
-  z-index: 5;
+  border: 2px solid rgba(239, 68, 68, 0.5);
+  box-shadow:
+    0 12px 35px rgba(0, 0, 0, 0.65),
+    0 0 20px rgba(239, 68, 68, 0.25);
+  z-index: 20;
   background: #0f172a;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.vc-local-pip:hover {
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.75),
+    0 0 25px rgba(239, 68, 68, 0.4);
+}
+
+.vc-local-pip.is-dragging {
+  cursor: grabbing !important;
+  transform: scale(1.06) !important;
+  border-color: #ef4444;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.85),
+    0 0 35px rgba(239, 68, 68, 0.6);
+  z-index: 30;
 }
 
 .vc-local-pip video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform: scaleX(-1);
+  pointer-events: none;
 }
 
 .vc-local-pip .vc-local-off {
@@ -226,78 +279,77 @@
 }
 
 .vc-local-pip .vc-local-off span {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 800;
   color: #f87171;
 }
 
-/* ── Controls bar ────────────────────────────────────────── */
-.vc-controls {
+/* Grab handle pill at the top of PiP */
+.vc-pip-handle {
   position: absolute;
-  bottom: 0;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 22;
+  pointer-events: none;
+}
+
+/* Swap button inside PiP */
+.vc-pip-swap-btn {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #f1f5f9;
+  z-index: 22;
+  cursor: pointer;
+  transition: all 0.15s;
+  touch-action: manipulation;
+}
+
+.vc-pip-swap-btn:hover {
+  transform: scale(1.1);
+  background: rgba(239, 68, 68, 0.85);
+  border-color: #ef4444;
+}
+
+/* ── Top status bar (Duration + HD Badge) ─────────────────── */
+.vc-top-bar {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top, 16px));
   left: 0;
   right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.85rem;
-  padding: 1rem 1rem max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
-  background: linear-gradient(0deg, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.5) 70%, transparent 100%);
-  z-index: 10;
+  gap: 0.75rem;
+  z-index: 25;
+  pointer-events: none;
 }
 
-.vc-ctrl-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(30, 41, 59, 0.75);
-  backdrop-filter: blur(8px);
-  color: #e2e8f0;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.15s;
-}
-
-.vc-ctrl-btn:hover {
-  background: rgba(51, 65, 85, 0.8);
-  border-color: rgba(148, 163, 184, 0.4);
-  transform: scale(1.08);
-}
-
-.vc-ctrl-btn:active {
-  transform: scale(0.92);
-}
-
-.vc-ctrl-btn.active {
-  background: rgba(239, 68, 68, 0.3);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #fca5a5;
-}
-
-.vc-ctrl-btn.active:hover {
-  background: rgba(239, 68, 68, 0.4);
-}
-
-/* ── Call duration ────────────────────────────────────────── */
 .vc-duration {
-  position: absolute;
-  top: max(16px, env(safe-area-inset-top, 16px));
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 1rem;
+  padding: 0.35rem 0.9rem;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  z-index: 10;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
 }
 
 .vc-duration .vc-dot {
@@ -311,9 +363,86 @@
 
 .vc-duration .vc-time {
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: #e2e8f0;
   font-variant-numeric: tabular-nums;
+}
+
+.vc-badge-hd {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: 0.04em;
+  pointer-events: auto;
+}
+
+.vc-badge-hd .vc-hd-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b82f6;
+  box-shadow: 0 0 6px rgba(59, 130, 246, 0.8);
+}
+
+/* ── Controls bar ────────────────────────────────────────── */
+.vc-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1rem max(1.25rem, env(safe-area-inset-bottom, 1.25rem));
+  background: linear-gradient(0deg, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.6) 70%, transparent 100%);
+  z-index: 25;
+}
+
+.vc-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(30, 41, 59, 0.75);
+  backdrop-filter: blur(10px);
+  color: #e2e8f0;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+}
+
+.vc-ctrl-btn:hover {
+  background: rgba(51, 65, 85, 0.85);
+  border-color: rgba(148, 163, 184, 0.4);
+  transform: scale(1.08);
+}
+
+.vc-ctrl-btn:active {
+  transform: scale(0.92);
+}
+
+.vc-ctrl-btn.active {
+  background: rgba(239, 68, 68, 0.35);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+}
+
+.vc-ctrl-btn.active:hover {
+  background: rgba(239, 68, 68, 0.5);
 }
 
 /* ── Toast / error message ───────────────────────────────── */
@@ -323,11 +452,11 @@
   align-items: center;
   gap: 1rem;
   padding: 2rem;
-  border-radius: 1rem;
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(24px);
+  box-shadow: 0 0 40px rgba(239, 68, 68, 0.15);
   max-width: 320px;
   width: 90vw;
   text-align: center;
@@ -456,13 +585,11 @@
   }
 }
 
-/* ── Responsive tweaks ───────────────────────────────────── */
+/* ── Responsive PiP & Controls ───────────────────────────── */
 @media (min-width: 640px) {
   .vc-local-pip {
     width: 180px;
     height: 135px;
-    bottom: 110px;
-    right: 24px;
   }
 
   .vc-controls {
@@ -480,8 +607,6 @@
   .vc-local-pip {
     width: 220px;
     height: 165px;
-    bottom: 120px;
-    right: 32px;
-    border-radius: 16px;
+    border-radius: 18px;
   }
 }

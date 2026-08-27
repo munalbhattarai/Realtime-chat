@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../hooks/useAuth";
 import SpideyLogo from "../components/common/SpideyLogo";
+import GoogleAuthButton from "../components/auth/GoogleAuthButton";
 
 const Register = () => {
   const navigate = useNavigate();
 
   const {
     register,
+    loginWithGoogle,
     isLoading,
     error,
   } = useAuth();
@@ -38,6 +40,17 @@ const Register = () => {
       await register(formData);
 
       navigate("/login", {
+        replace: true,
+      });
+    } catch {
+      // Error is already stored in Redux.
+    }
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    try {
+      await loginWithGoogle(credential);
+      navigate("/chat", {
         replace: true,
       });
     } catch {
@@ -84,6 +97,24 @@ const Register = () => {
               </ul>
             </div>
           )}
+
+          {/* Google Sign-In */}
+          <div className="mb-6">
+            <GoogleAuthButton
+              onSuccess={handleGoogleSuccess}
+              text="Continue with Google"
+            />
+          </div>
+
+          {/* Divider */}
+          <div className="relative my-6 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-800" />
+            </div>
+            <div className="relative bg-slate-950/90 px-3 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+              Or Register New Hero
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">

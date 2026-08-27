@@ -18,6 +18,15 @@ export const loginUser = async (credentials) => {
   return response.data;
 };
 
+export const googleAuthUser = async ({ credential }) => {
+  const response = await api.post(
+    "/accounts/google/",
+    { credential },
+  );
+
+  return response.data;
+};
+
 export const refreshAccessToken = async (
   refreshToken,
 ) => {

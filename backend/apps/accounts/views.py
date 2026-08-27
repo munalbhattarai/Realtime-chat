@@ -18,7 +18,9 @@ from .serializers import (
     MeSerializer,
     UserSearchSerializer,
     FriendRequestSerializer,
+    GoogleAuthSerializer,
 )
+from .google_auth import authenticate_or_create_google_user
 
 User = get_user_model()
 
@@ -31,6 +33,19 @@ class RegisterView(generics.CreateAPIView):
 class LoginView(TokenObtainPairView):
     serializer_class = LoginSerializer
     permission_classes = [permissions.AllowAny]
+
+
+class GoogleAuthView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        credential = serializer.validated_data["credential"]
+        auth_data = authenticate_or_create_google_user(credential)
+
+        return Response(auth_data, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
