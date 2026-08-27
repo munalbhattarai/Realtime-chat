@@ -45,16 +45,23 @@ const useChatSocket = (
   conversationId,
   token,
   currentUserId,
+  callEventHandler,
 ) => {
   const dispatch = useDispatch();
 
   const socketRef = useRef(null);
   const pendingOptimisticRef = useRef(new Map());
+  const callEventHandlerRef = useRef(callEventHandler);
 
   const [
     connectionState,
     setConnectionState,
   ] = useState("disconnected");
+
+  // Keep the call event handler ref fresh
+  useEffect(() => {
+    callEventHandlerRef.current = callEventHandler;
+  }, [callEventHandler]);
 
   const handleMessage = useCallback(
     (event) => {
@@ -391,6 +398,20 @@ const useChatSocket = (
           break;
         }
 
+        // ── Video call signaling events ──────────────────
+        case "call.invite":
+        case "call.accept":
+        case "call.reject":
+        case "call.offer":
+        case "call.answer":
+        case "call.ice_candidate":
+        case "call.end":
+        case "call.cancel":
+        case "call.busy": {
+          callEventHandlerRef.current?.(event);
+          break;
+        }
+
         case "error": {
           break;
         }
@@ -612,6 +633,7 @@ const useChatSocket = (
     startTyping,
     stopTyping,
     markMessageAsRead,
+    socketRef,
   };
 };
 

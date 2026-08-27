@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   useSelector,
   useDispatch,
@@ -11,8 +11,10 @@ import { deleteConversation, leaveGroupConversation } from "../../features/conve
 import MessageList from "./MessageList";
 import MessageComposer from "./MessageComposer";
 import TypingIndicator from "./TypingIndicator";
+import VideoCallOverlay from "./VideoCallOverlay";
 
 import useChatSocket from "../../hooks/useChatSocket";
+import useWebRTC from "../../hooks/useWebRTC";
 import { getMediaUrl } from "../../services/api";
 import { uploadMessageImage } from "../../features/messages/messageApi";
 import UserProfileModal from "./UserProfileModal";
@@ -67,6 +69,13 @@ const ChatWindow = () => {
     shallowEqual,
   );
 
+  // ── Stable wrapper for call events (solves circular dep: webrtc needs socketRef, chatSocket needs callHandler) ──
+  const callHandlerRef = useState(() => ({ current: null }))[0];
+  const stableCallEventHandler = useCallback(
+    (event) => callHandlerRef.current?.(event),
+    [callHandlerRef],
+  );
+
   const {
     connectionState,
     isConnected,
@@ -75,11 +84,22 @@ const ChatWindow = () => {
     startTyping,
     stopTyping,
     markMessageAsRead,
+    socketRef,
   } = useChatSocket(
     effectiveConversationId,
     accessToken,
     currentUser?.id,
+    stableCallEventHandler,
   );
+
+  // ── WebRTC hook ───────────────────────────────────────────────────
+  const webrtc = useWebRTC({
+    socketRef,
+    currentUserId: currentUser?.id,
+  });
+
+  // Wire the call event handler now that webrtc is available
+  callHandlerRef.current = webrtc.onCallEvent;
 
 
   /* No conversation selected */
@@ -212,6 +232,18 @@ const ChatWindow = () => {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Video Call button — only for PRIVATE conversations */}
+          {conversation.type === "PRIVATE" && (
+            <button
+              onClick={() => webrtc.startCall(activeConversationId)}
+              disabled={webrtc.callState !== "idle"}
+              title="Video Call"
+              className="flex h-8 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-xl border border-blue-500/30 bg-blue-950/30 px-2.5 sm:px-3 text-xs font-bold text-blue-400 hover:bg-blue-900/50 transition cursor-pointer shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="h-3.5 w-3.5"><polygon points="23 7 16 12 23 17 23 7" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" /></svg>
+              <span className="hidden xs:inline">Video Call</span>
+            </button>
+          )}
           {conversation.type === "GROUP" ? (
             <button
               onClick={() => setIsLeaveModalOpen(true)}
@@ -300,6 +332,27 @@ const ChatWindow = () => {
         confirmText="Leave Alliance"
         cancelText="Stay in Alliance"
         isDanger={true}
+      />
+
+      {/* Video Call Overlay */}
+      <VideoCallOverlay
+        callState={webrtc.callState}
+        callerInfo={webrtc.callerInfo}
+        otherUserName={otherMember
+          ? [otherMember.first_name, otherMember.last_name].filter(Boolean).join(" ") || otherMember.username
+          : "User"}
+        isMuted={webrtc.isMuted}
+        isCameraOff={webrtc.isCameraOff}
+        callDuration={webrtc.callDuration}
+        errorMessage={webrtc.errorMessage}
+        localVideoRef={webrtc.localVideoRef}
+        remoteVideoRef={webrtc.remoteVideoRef}
+        onAccept={webrtc.acceptCall}
+        onReject={webrtc.rejectCall}
+        onEnd={webrtc.endCall}
+        onToggleMute={webrtc.toggleMute}
+        onToggleCamera={webrtc.toggleCamera}
+        onDismiss={() => webrtc.cleanup("idle")}
       />
     </section>
   );

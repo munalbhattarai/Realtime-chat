@@ -1,0 +1,485 @@
+/* ═══════════════════════════════════════════════════════════
+   VideoCall.css — Video call overlay styles (Spidey theme)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Overlay backdrop ────────────────────────────────────── */
+.vc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 7, 20, 0.92);
+  backdrop-filter: blur(12px);
+  animation: vcFadeIn 0.25s ease-out;
+}
+
+/* ── Incoming / Calling card ─────────────────────────────── */
+.vc-signal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 2.5rem 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 0 40px rgba(239, 68, 68, 0.15),
+    0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  max-width: 340px;
+  width: 90vw;
+  text-align: center;
+}
+
+.vc-signal-card .vc-avatar-ring {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
+}
+
+.vc-signal-card .vc-avatar-ring.ringing {
+  animation: vcRingPulse 1.5s ease-in-out infinite;
+}
+
+.vc-signal-card .vc-avatar-ring.calling {
+  animation: vcCallPulse 2s ease-in-out infinite;
+}
+
+.vc-signal-card .vc-avatar-letter {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #f87171;
+}
+
+.vc-signal-card .vc-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.vc-signal-card .vc-username {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin-top: -0.25rem;
+}
+
+.vc-signal-card .vc-status {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* ── Action buttons in signal card ───────────────────────── */
+.vc-actions {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+
+.vc-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  color: #fff;
+}
+
+.vc-btn:active {
+  transform: scale(0.92);
+}
+
+.vc-btn-accept {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+}
+
+.vc-btn-accept:hover {
+  box-shadow: 0 0 30px rgba(34, 197, 94, 0.7);
+  transform: scale(1.08);
+}
+
+.vc-btn-reject,
+.vc-btn-end {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+.vc-btn-reject:hover,
+.vc-btn-end:hover {
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.7);
+  transform: scale(1.08);
+}
+
+.vc-btn-cancel {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+}
+
+.vc-btn-cancel:hover {
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.6);
+  transform: scale(1.08);
+}
+
+/* ── Connected call layout ───────────────────────────────── */
+.vc-connected {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #020617;
+}
+
+.vc-remote-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #0f172a;
+}
+
+.vc-remote-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
+
+.vc-remote-placeholder .vc-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1e293b, #334155);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
+}
+
+.vc-remote-placeholder .vc-avatar-large span {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #f87171;
+}
+
+.vc-remote-placeholder .vc-remote-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* ── Local video (PiP corner) ────────────────────────────── */
+.vc-local-pip {
+  position: absolute;
+  bottom: 100px;
+  right: 16px;
+  width: 140px;
+  height: 105px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+  background: #0f172a;
+}
+
+.vc-local-pip video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.vc-local-pip .vc-local-off {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+}
+
+.vc-local-pip .vc-local-off span {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #f87171;
+}
+
+/* ── Controls bar ────────────────────────────────────────── */
+.vc-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.25rem 1rem;
+  background: linear-gradient(0deg, rgba(2, 6, 23, 0.9) 0%, transparent 100%);
+  z-index: 10;
+}
+
+.vc-ctrl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(8px);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vc-ctrl-btn:hover {
+  background: rgba(51, 65, 85, 0.8);
+  border-color: rgba(148, 163, 184, 0.4);
+  transform: scale(1.08);
+}
+
+.vc-ctrl-btn:active {
+  transform: scale(0.92);
+}
+
+.vc-ctrl-btn.active {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
+.vc-ctrl-btn.active:hover {
+  background: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Call duration ────────────────────────────────────────── */
+.vc-duration {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  z-index: 10;
+}
+
+.vc-duration .vc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+  animation: vcDotPulse 2s ease-in-out infinite;
+}
+
+.vc-duration .vc-time {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Toast / error message ───────────────────────────────── */
+.vc-toast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 0 30px rgba(239, 68, 68, 0.1);
+  max-width: 320px;
+  width: 90vw;
+  text-align: center;
+}
+
+.vc-toast .vc-toast-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vc-toast .vc-toast-icon.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+}
+
+.vc-toast .vc-toast-icon.info {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+}
+
+.vc-toast .vc-toast-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.vc-toast .vc-toast-msg {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.vc-toast .vc-toast-dismiss {
+  margin-top: 0.25rem;
+  padding: 0.4rem 1.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.vc-toast .vc-toast-dismiss:hover {
+  background: rgba(51, 65, 85, 0.7);
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+/* ── Connecting spinner ──────────────────────────────────── */
+.vc-connecting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.vc-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 3px solid rgba(239, 68, 68, 0.2);
+  border-top-color: #ef4444;
+  animation: vcSpin 0.8s linear infinite;
+}
+
+.vc-connecting-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes vcFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes vcRingPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(34, 197, 94, 0.5),
+      0 0 0 8px rgba(34, 197, 94, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(34, 197, 94, 0.6),
+      0 0 0 16px rgba(34, 197, 94, 0.1);
+  }
+}
+
+@keyframes vcCallPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(59, 130, 246, 0.4),
+      0 0 0 8px rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    box-shadow:
+      0 0 0 5px rgba(59, 130, 246, 0.5),
+      0 0 0 16px rgba(59, 130, 246, 0.08);
+  }
+}
+
+@keyframes vcSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes vcDotPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ── Responsive tweaks ───────────────────────────────────── */
+@media (min-width: 640px) {
+  .vc-local-pip {
+    width: 180px;
+    height: 135px;
+    bottom: 110px;
+    right: 24px;
+  }
+
+  .vc-controls {
+    gap: 1.25rem;
+    padding: 1.5rem;
+  }
+
+  .vc-ctrl-btn {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .vc-local-pip {
+    width: 220px;
+    height: 165px;
+    bottom: 120px;
+    right: 32px;
+    border-radius: 16px;
+  }
+}

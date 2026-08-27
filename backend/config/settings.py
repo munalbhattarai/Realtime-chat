@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.chats',
     'apps.messages',
+    'apps.calls',
     'corsheaders',
     'cloudinary',
     'cloudinary_storage',

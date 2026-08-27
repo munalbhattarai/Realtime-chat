@@ -124,3 +124,48 @@ def broadcast_presence(
             )
     except Exception as e:
         print(f"Presence broadcast warning: {e}")
+
+
+# ── Call-active state tracking ───────────────────────────────────────
+CALL_ACTIVE_KEY_PREFIX = "call:active:"
+CALL_ACTIVE_TTL = 300  # 5 minutes — safety net if cleanup is missed
+
+# In-memory fallback for call state when Redis is unavailable
+_in_memory_call_state = {}
+
+
+def set_user_in_call(user_id, call_id):
+    """Mark a user as currently in a video call."""
+    redis = get_redis()
+    if redis:
+        try:
+            key = f"{CALL_ACTIVE_KEY_PREFIX}{user_id}"
+            redis.set(key, str(call_id), ex=CALL_ACTIVE_TTL)
+            return
+        except Exception as e:
+            print(f"Redis set_user_in_call error: {e}")
+    _in_memory_call_state[user_id] = str(call_id)
+
+
+def clear_user_in_call(user_id):
+    """Clear a user's active call state."""
+    redis = get_redis()
+    if redis:
+        try:
+            redis.delete(f"{CALL_ACTIVE_KEY_PREFIX}{user_id}")
+            return
+        except Exception as e:
+            print(f"Redis clear_user_in_call error: {e}")
+    _in_memory_call_state.pop(user_id, None)
+
+
+def is_user_in_call(user_id):
+    """Return the call_id if user is in a call, else None."""
+    redis = get_redis()
+    if redis:
+        try:
+            val = redis.get(f"{CALL_ACTIVE_KEY_PREFIX}{user_id}")
+            return val if val else None
+        except Exception as e:
+            print(f"Redis is_user_in_call error: {e}")
+    return _in_memory_call_state.get(user_id)
