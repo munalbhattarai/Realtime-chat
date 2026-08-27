@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback } from "react";
+import { createContext, useContext, useState, useCallback, useEffect } from "react";
 import SpideyLogo from "./SpideyLogo";
 
 const ToastContext = createContext(null);

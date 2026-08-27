@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSelector } from "react-redux";
 import {
   searchUsers,
   getFriendRequests,
@@ -13,6 +14,7 @@ import SpideyLogo from "../common/SpideyLogo";
 import { useToast } from "../common/ToastContext";
 
 const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
+  const currentUser = useSelector((state) => state.auth.user);
   const { showSuccess, showError, showInfo } = useToast();
   const [activeTab, setActiveTab] = useState(initialTab); // "add" | "requests" | "group"
 
@@ -62,7 +64,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
 
   // Debounced exact username search
   useEffect(() => {
-    const trimmed = query.trim().lstrip ? query.trim().lstrip("@") : query.trim().replace(/^@/, "");
+    const trimmed = query.trim().replace(/^@/, "");
     if (!trimmed) {
       setSearchResults([]);
       setIsSearching(false);
@@ -75,7 +77,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
       try {
         const res = await searchUsers(trimmed);
         setSearchResults(res.results || res);
-      } catch (err) {
+      } catch {
         setSearchError("Failed to search user across Web-Net.");
       } finally {
         setIsSearching(false);
@@ -134,7 +136,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
       await rejectFriendRequest(requestId);
       showInfo("Add request declined.");
       loadRequests();
-    } catch (err) {
+    } catch {
       showError("Failed to decline request.");
     } finally {
       setActionLoadingId(null);
@@ -156,7 +158,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
         );
       }
       loadRequests();
-    } catch (err) {
+    } catch {
       showError("Failed to cancel request.");
     } finally {
       setActionLoadingId(null);
@@ -184,13 +186,14 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
   };
 
   // Extract list of all connected allies from existing private conversations
-  const connectedAllies = conversations
+  const connectedAllies = (conversations || [])
     .filter((c) => c.type === "PRIVATE")
     .map((c) => {
-      const ally = c.members?.find((m) => m.username !== c.currentUserUsername);
+      const ally = c.members?.find((m) => m.user_id !== currentUser?.id);
       return ally ? { id: ally.user_id, username: ally.username, first_name: ally.first_name, last_name: ally.last_name, profile_picture: ally.profile_picture, conversationId: c.id } : null;
     })
     .filter(Boolean);
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md animate-fadeIn">

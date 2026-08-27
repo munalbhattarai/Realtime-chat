@@ -13,8 +13,8 @@ const RAW_API_URL =
     ? "http://127.0.0.1:8000/api"
     : "https://realtime-chat-rrwp.onrender.com/api");
 
-// Ensure exactly one trailing slash, so axios path joins stay clean.
-const DEFAULT_API_URL = RAW_API_URL.replace(/\/+$/, "/");
+// Ensure no trailing slash so axios joins stay clean
+const DEFAULT_API_URL = RAW_API_URL.replace(/\/+$/, "");
 
 const api = axios.create({
   baseURL: DEFAULT_API_URL,
