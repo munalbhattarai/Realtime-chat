@@ -27,6 +27,17 @@ export const googleAuthUser = async ({ credential }) => {
   return response.data;
 };
 
+export const getGoogleClientId = async () => {
+  try {
+    const response = await api.get(
+      "/accounts/google-client-id/",
+    );
+    return response.data?.client_id || "";
+  } catch {
+    return "";
+  }
+};
+
 export const refreshAccessToken = async (
   refreshToken,
 ) => {

@@ -12,34 +12,36 @@ import Chat from "../pages/Chat";
 
 const App = () => {
   return (
-    <Routes>
-      <Route
-        path="/login"
-        element={<Login />}
-      />
-
-      <Route
-        path="/register"
-        element={<Register />}
-      />
-
-      <Route element={<ProtectedRoute />}>
+    <div className="flex-1 flex flex-col min-h-0 w-full h-full">
+      <Routes>
         <Route
-          path="/chat"
-          element={<Chat />}
+          path="/login"
+          element={<Login />}
         />
-      </Route>
 
-      <Route
-        path="*"
-        element={
-          <Navigate
-            to="/chat"
-            replace
+        <Route
+          path="/register"
+          element={<Register />}
+        />
+
+        <Route element={<ProtectedRoute />}>
+          <Route
+            path="/chat"
+            element={<Chat />}
           />
-        }
-      />
-    </Routes>
+        </Route>
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/chat"
+              replace
+            />
+          }
+        />
+      </Routes>
+    </div>
   );
 };
 

@@ -8,8 +8,8 @@ const Chat = () => {
   );
 
   return (
-    <main className="h-full h-[100dvh] w-full overflow-hidden spidey-web-bg font-sans">
-      <div className="flex h-full w-full relative overflow-hidden">
+    <main className="flex-1 flex flex-col min-h-0 h-full h-[100dvh] w-full overflow-hidden spidey-web-bg font-sans">
+      <div className="flex flex-1 min-h-0 h-full w-full relative overflow-hidden">
         {/* Sidebar: full screen on mobile when no conversation active, fixed width on tablet/desktop */}
         <div
           className={`w-full md:w-80 lg:w-96 h-full shrink-0 ${

@@ -2,9 +2,10 @@
  * GoogleAuthButton — Production-ready Google OAuth 2.0 / OpenID Connect button.
  *
  * Uses Google Identity Services (GIS).
- * On success, invokes onSuccess(credential) or onError(error).
+ * Supports both VITE_GOOGLE_CLIENT_ID and dynamic backend fallback from settings.GOOGLE_CLIENT_ID.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
+import { getGoogleClientId } from "../../features/auth/authApi";
 
 // Official Google "G" 4-color SVG icon
 const GoogleGIcon = ({ size = 20 }) => (
@@ -28,13 +29,30 @@ const GoogleGIcon = ({ size = 20 }) => (
   </svg>
 );
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const STATIC_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", disabled = false }) => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [clientId, setClientId] = useState(STATIC_GOOGLE_CLIENT_ID);
   const [isLoading, setIsLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
   const googleBtnContainerRef = useRef(null);
+
+  // Fetch client ID from backend if not defined in frontend env
+  useEffect(() => {
+    if (clientId) return;
+
+    let isMounted = true;
+    getGoogleClientId().then((id) => {
+      if (isMounted && id) {
+        setClientId(id);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [clientId]);
 
   const handleCredentialResponse = useCallback(
     async (response) => {
@@ -91,13 +109,13 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
 
   // Initialize GIS and render native hidden/overlay button
   useEffect(() => {
-    if (!isScriptLoaded || !window.google?.accounts?.id || !GOOGLE_CLIENT_ID) {
+    if (!isScriptLoaded || !window.google?.accounts?.id || !clientId) {
       return;
     }
 
     try {
       window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
+        client_id: clientId,
         callback: handleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: true,
@@ -118,11 +136,27 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
     } catch (e) {
       console.warn("Error initializing Google Sign-In:", e);
     }
-  }, [isScriptLoaded, handleCredentialResponse]);
+  }, [isScriptLoaded, clientId, handleCredentialResponse]);
 
-  const handleCustomButtonClick = () => {
-    if (!GOOGLE_CLIENT_ID) {
-      const msg = "Google Client ID is not configured in VITE_GOOGLE_CLIENT_ID.";
+  const handleCustomButtonClick = async () => {
+    let activeClientId = clientId;
+
+    if (!activeClientId) {
+      setIsLoading(true);
+      try {
+        activeClientId = await getGoogleClientId();
+        if (activeClientId) {
+          setClientId(activeClientId);
+        }
+      } catch {
+        // Handled below
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (!activeClientId) {
+      const msg = "Google Client ID is not configured. Please set GOOGLE_CLIENT_ID on Render or VITE_GOOGLE_CLIENT_ID on Cloudflare Pages.";
       setLocalError(msg);
       onError?.(msg);
       return;
@@ -140,7 +174,6 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed()) {
           console.info("Google Prompt not displayed:", notification.getNotDisplayedReason());
-          // Fallback: try clicking rendered hidden button
           const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role="button"]');
           if (nativeBtn) {
             nativeBtn.click();
@@ -151,7 +184,6 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
       });
     } catch (err) {
       console.warn("Google prompt error:", err);
-      // Fallback click on rendered button
       const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role="button"]');
       if (nativeBtn) {
         nativeBtn.click();
@@ -173,12 +205,12 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
         type="button"
         onClick={handleCustomButtonClick}
         disabled={disabled || isLoading}
-        className="group relative flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-700/60 bg-slate-900/90 px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-red-500/50 hover:bg-slate-800/90 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+        className="group relative flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-700/60 bg-slate-900/90 px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-red-500/50 hover:bg-slate-800/90 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
       >
         {isLoading ? (
           <div className="flex items-center gap-2.5">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
-            <span className="text-slate-300">Authenticating with Google…</span>
+            <span className="text-slate-300">Connecting to Google…</span>
           </div>
         ) : (
           <>

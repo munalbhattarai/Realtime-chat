@@ -48,6 +48,15 @@ class GoogleAuthView(APIView):
         return Response(auth_data, status=status.HTTP_200_OK)
 
 
+class GoogleClientIdView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        from django.conf import settings
+        client_id = getattr(settings, "GOOGLE_CLIENT_ID", "")
+        return Response({"client_id": client_id}, status=status.HTTP_200_OK)
+
+
 class LogoutView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
