@@ -59,27 +59,29 @@ const Register = () => {
   };
 
   return (
-    <main className="flex min-h-screen min-h-[100dvh] items-center justify-center p-3.5 sm:p-6 py-6 sm:py-10 spidey-web-bg relative overflow-y-auto overflow-x-hidden font-sans">
-      {/* Background decoration */}
-      <div className="absolute top-[-10%] right-[-10%] h-[50%] w-[50%] rounded-full bg-red-600/15 blur-[140px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] h-[50%] w-[50%] rounded-full bg-blue-600/15 blur-[140px] pointer-events-none" />
+    <main className="relative flex min-h-screen min-h-[100dvh] w-full flex-col items-center justify-center p-3 sm:p-6 py-6 sm:py-10 spidey-web-bg font-sans">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none fixed top-[-10%] right-[-10%] h-[50vw] w-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-red-600/15 blur-[120px]" />
+      <div className="pointer-events-none fixed bottom-[-10%] left-[-10%] h-[50vw] w-[50vw] max-w-[500px] max-h-[500px] rounded-full bg-blue-600/15 blur-[120px]" />
 
-      <div className="w-full max-w-lg relative z-10 m-auto">
-        <div className="rounded-2xl sm:rounded-3xl border border-red-900/40 bg-slate-950/85 p-4.5 sm:p-8 shadow-[0_0_40px_rgba(220,38,38,0.25)] backdrop-blur-xl">
-          <div className="mb-4 sm:mb-6 text-center">
-            <div className="mx-auto mb-2.5 sm:mb-3.5 flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-slate-900 ring-3 sm:ring-4 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.5)]">
-              <SpideyLogo size={28} className="sm:w-9 sm:h-9" />
+      <div className="relative z-10 w-full max-w-md sm:max-w-lg m-auto">
+        <div className="rounded-2xl sm:rounded-3xl border border-red-900/40 bg-slate-950/90 p-4 sm:p-7 shadow-[0_0_40px_rgba(220,38,38,0.25)] backdrop-blur-xl">
+          {/* Header */}
+          <div className="mb-4 sm:mb-5 text-center">
+            <div className="mx-auto mb-2 sm:mb-3 flex h-11 w-11 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-slate-900 ring-2 sm:ring-3 ring-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.5)]">
+              <SpideyLogo size={24} className="sm:w-7 sm:h-7" />
             </div>
             <h1 className="text-xl sm:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-300 to-blue-400 uppercase">
               Join Web-Verse
             </h1>
-            <p className="mt-1 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <p className="mt-0.5 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
               Become a Spidey-Chat Ally
             </p>
           </div>
 
+          {/* Validation Errors */}
           {error && (
-            <div className="mb-4 sm:mb-5 flex flex-col gap-1.5 rounded-xl sm:rounded-2xl border border-red-500/40 bg-red-950/40 p-3 sm:p-4 text-xs sm:text-sm text-red-300">
+            <div className="mb-4 flex flex-col gap-1 rounded-xl sm:rounded-2xl border border-red-500/40 bg-red-950/40 p-3 text-xs sm:text-sm text-red-300">
               <div className="flex items-center gap-1.5 font-bold">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                 <span>Please fix the following errors:</span>
@@ -99,7 +101,7 @@ const Register = () => {
           )}
 
           {/* Google Sign-In */}
-          <div className="mb-4 sm:mb-5">
+          <div className="mb-3.5 sm:mb-4">
             <GoogleAuthButton
               onSuccess={handleGoogleSuccess}
               text="Continue with Google"
@@ -107,7 +109,7 @@ const Register = () => {
           </div>
 
           {/* Divider */}
-          <div className="relative my-4 sm:my-5 flex items-center justify-center">
+          <div className="relative my-3.5 sm:my-4 flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-800" />
             </div>
@@ -116,8 +118,9 @@ const Register = () => {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
-            <div className="grid gap-2.5 sm:gap-3.5 sm:grid-cols-2">
+          {/* Registration Form */}
+          <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div className="space-y-1">
                 <label htmlFor="first_name" className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-400 pl-1">
                   First name
@@ -128,7 +131,7 @@ const Register = () => {
                   type="text"
                   value={formData.first_name}
                   onChange={handleChange}
-                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                   placeholder="Peter"
                 />
               </div>
@@ -143,7 +146,7 @@ const Register = () => {
                   type="text"
                   value={formData.last_name}
                   onChange={handleChange}
-                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                   placeholder="Parker"
                 />
               </div>
@@ -161,7 +164,7 @@ const Register = () => {
                 value={formData.username}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                 placeholder="spidey123"
               />
             </div>
@@ -178,12 +181,12 @@ const Register = () => {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                 placeholder="spidey@web-verse.com"
               />
             </div>
 
-            <div className="grid gap-2.5 sm:gap-3.5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
               <div className="space-y-1">
                 <label htmlFor="password" className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-red-400 pl-1">
                   Password
@@ -197,7 +200,7 @@ const Register = () => {
                   onChange={handleChange}
                   minLength={8}
                   required
-                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                   placeholder="••••••••"
                 />
               </div>
@@ -215,7 +218,7 @@ const Register = () => {
                   onChange={handleChange}
                   minLength={8}
                   required
-                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
+                  className="w-full rounded-xl sm:rounded-2xl border border-slate-800 bg-slate-900 px-3.5 py-2 sm:px-4 sm:py-2.5 text-sm text-slate-100 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 placeholder:text-slate-600"
                   placeholder="••••••••"
                 />
               </div>
@@ -224,7 +227,7 @@ const Register = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-4 sm:mt-5 flex w-full items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-blue-600 px-4 py-3 sm:py-3.5 text-xs sm:text-sm font-black tracking-wide text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition hover:from-red-500 hover:to-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] active:scale-98 disabled:cursor-not-allowed disabled:opacity-50"
+              className="mt-3.5 sm:mt-4 flex min-h-[44px] w-full items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-r from-red-600 via-rose-600 to-blue-600 px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-black tracking-wider text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] transition hover:from-red-500 hover:to-blue-500 hover:shadow-[0_0_25px_rgba(37,99,235,0.6)] active:scale-98 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
             >
               {isLoading ? (
                 <div className="flex items-center gap-2">
@@ -237,7 +240,8 @@ const Register = () => {
             </button>
           </form>
 
-          <p className="mt-5 sm:mt-7 text-center text-xs sm:text-sm text-slate-400">
+          {/* Footer Navigation */}
+          <p className="mt-4 sm:mt-5 text-center text-xs sm:text-sm text-slate-400">
             Already a Web-Verse ally?{" "}
             <Link to="/login" className="font-bold text-red-400 hover:text-red-300 transition">
               Sign in
