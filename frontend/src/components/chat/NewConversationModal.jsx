@@ -196,22 +196,22 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md animate-fadeIn">
-      <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-red-900/30 bg-slate-950 shadow-[0_0_40px_rgba(220,38,38,0.25)] transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-4 backdrop-blur-md animate-fadeIn">
+      <div className="flex w-full max-w-lg max-h-[92dvh] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-red-900/30 bg-slate-950 shadow-[0_0_40px_rgba(220,38,38,0.25)] transition-all">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-red-900/20 bg-slate-900/50 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-red-900/20 bg-slate-900/50 px-4 sm:px-6 py-3.5 sm:py-4">
           <div className="flex items-center gap-2.5">
-            <SpideyLogo size={28} />
+            <SpideyLogo size={26} className="sm:w-7 sm:h-7" />
             <div>
-              <h2 className="text-base font-black text-slate-100 uppercase tracking-wider">
+              <h2 className="text-sm sm:text-base font-black text-slate-100 uppercase tracking-wider">
                 Web Connections
               </h2>
-              <p className="text-[10px] text-blue-400 font-semibold tracking-wide">WEB-NET SECURE ALLIANCES</p>
+              <p className="text-[9px] sm:text-[10px] text-blue-400 font-semibold tracking-wide">WEB-NET SECURE ALLIANCES</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white cursor-pointer"
+            className="rounded-full p-1.5 sm:p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white cursor-pointer"
             aria-label="Close modal"
           >
             ✕
@@ -219,11 +219,11 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-red-900/20 bg-slate-950 px-4 pt-2">
+        <div className="flex shrink-0 overflow-x-auto border-b border-red-900/20 bg-slate-950 px-2 sm:px-4 pt-1.5 sm:pt-2 scrollbar-none">
           <button
             onClick={() => setActiveTab("add")}
             className={[
-              "flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition cursor-pointer",
+              "flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 whitespace-nowrap transition cursor-pointer",
               activeTab === "add"
                 ? "border-red-500 text-red-400"
                 : "border-transparent text-slate-400 hover:text-slate-200",
@@ -244,7 +244,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
               loadRequests();
             }}
             className={[
-              "relative flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition cursor-pointer",
+              "relative flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 whitespace-nowrap transition cursor-pointer",
               activeTab === "requests"
                 ? "border-red-500 text-red-400"
                 : "border-transparent text-slate-400 hover:text-slate-200",
@@ -264,7 +264,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
           <button
             onClick={() => setActiveTab("group")}
             className={[
-              "flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition cursor-pointer",
+              "flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider border-b-2 whitespace-nowrap transition cursor-pointer",
               activeTab === "group"
                 ? "border-red-500 text-red-400"
                 : "border-transparent text-slate-400 hover:text-slate-200",
@@ -281,7 +281,7 @@ const NewConversationModal = ({ isOpen, onClose, initialTab = "add" }) => {
         </div>
 
         {/* Modal Body */}
-        <div className="flex flex-col p-6 min-h-[320px] max-h-[440px] overflow-y-auto">
+        <div className="flex flex-1 flex-col p-4 sm:p-6 min-h-[220px] overflow-y-auto">
           {/* TAB 1: ADD ALLY (EXACT USERNAME SEARCH) */}
           {activeTab === "add" && (
             <div className="space-y-4">

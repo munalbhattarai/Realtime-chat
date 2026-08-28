@@ -28,18 +28,18 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
         />
 
         {/* Large Modal Content */}
-        <div className="relative w-full max-w-md overflow-hidden rounded-3xl border border-red-900/40 bg-slate-950/95 shadow-[0_0_40px_rgba(220,38,38,0.3)] backdrop-blur-xl z-10 animate-fadeIn">
+        <div className="relative w-full max-w-md max-h-[92dvh] overflow-y-auto rounded-2xl sm:rounded-3xl border border-red-900/40 bg-slate-950/95 shadow-[0_0_40px_rgba(220,38,38,0.3)] backdrop-blur-xl z-10 animate-fadeIn">
           {/* Header Banner */}
-          <div className="relative h-28 bg-gradient-to-r from-red-950 via-slate-900 to-blue-950 p-4 border-b border-red-900/30 flex items-start justify-between">
+          <div className="relative h-20 sm:h-28 bg-gradient-to-r from-red-950 via-slate-900 to-blue-950 p-4 border-b border-red-900/30 flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <SpideyLogo size={24} />
-              <span className="text-xs font-bold text-red-400 uppercase tracking-widest">
+              <SpideyLogo size={22} className="sm:w-6 sm:h-6" />
+              <span className="text-[11px] sm:text-xs font-bold text-red-400 uppercase tracking-widest">
                 Web-Net Ally File
               </span>
             </div>
             <button
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/80 text-slate-400 hover:bg-red-950 hover:text-white transition"
+              className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900/80 text-slate-400 hover:bg-red-950 hover:text-white transition cursor-pointer"
               aria-label="Close modal"
             >
               ✕
@@ -47,7 +47,7 @@ const UserProfileModal = ({ isOpen, onClose, user }) => {
           </div>
 
           {/* Profile Details Container */}
-          <div className="flex flex-col items-center text-center px-6 pb-6 -mt-14">
+          <div className="flex flex-col items-center text-center px-4 sm:px-6 pb-5 sm:pb-6 -mt-10 sm:-mt-14">
             {/* Large Avatar */}
             <div className="relative group mb-3">
               <div 

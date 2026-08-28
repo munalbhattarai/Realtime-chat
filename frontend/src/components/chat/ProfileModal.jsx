@@ -84,32 +84,32 @@ const ProfileModal = ({ isOpen, onClose }) => {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md animate-fadeIn">
-        <div className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-red-900/30 bg-slate-950 shadow-[0_0_40px_rgba(220,38,38,0.25)] transition-all">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-3 sm:p-4 backdrop-blur-md animate-fadeIn">
+        <div className="flex w-full max-w-lg max-h-[92dvh] flex-col overflow-hidden rounded-2xl sm:rounded-3xl border border-red-900/30 bg-slate-950 shadow-[0_0_40px_rgba(220,38,38,0.25)] transition-all">
           {/* Header Banner */}
-          <div className="relative h-24 bg-gradient-to-r from-red-950/80 via-slate-900 to-blue-950/80 border-b border-red-900/20 p-5 flex items-start justify-between">
+          <div className="relative shrink-0 h-20 sm:h-24 bg-gradient-to-r from-red-950/80 via-slate-900 to-blue-950/80 border-b border-red-900/20 p-4 sm:p-5 flex items-start justify-between">
             <div className="flex items-center gap-2.5">
-              <SpideyLogo size={28} />
+              <SpideyLogo size={26} className="sm:w-7 sm:h-7" />
               <div>
-                <h2 className="text-lg font-black text-slate-100 uppercase tracking-wider">Web Identity</h2>
-                <p className="text-[11px] text-blue-400 font-semibold tracking-wide">@{currentUser.username}</p>
+                <h2 className="text-base sm:text-lg font-black text-slate-100 uppercase tracking-wider">Web Identity</h2>
+                <p className="text-[10px] sm:text-[11px] text-blue-400 font-semibold tracking-wide">@{currentUser.username}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="rounded-full p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white"
+              className="rounded-full p-1.5 sm:p-2 text-slate-400 transition hover:bg-slate-900 hover:text-white"
               aria-label="Close modal"
             >
               ✕
             </button>
           </div>
 
-          <div className="flex flex-col p-6 space-y-5 -mt-10">
+          <div className="flex flex-1 flex-col p-4 sm:p-6 space-y-4 sm:space-y-5 -mt-8 sm:-mt-10 overflow-y-auto">
             {/* Large Avatar Section */}
             <div className="flex flex-col items-center gap-2.5">
               <div className="relative group">
                 <div 
-                  className="relative flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-slate-900 ring-4 ring-red-500/60 shadow-[0_0_25px_rgba(239,68,68,0.5)] group-hover:ring-blue-500 transition-all duration-300"
+                  className="relative flex h-24 w-24 sm:h-28 sm:w-28 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-slate-900 ring-4 ring-red-500/60 shadow-[0_0_25px_rgba(239,68,68,0.5)] group-hover:ring-blue-500 transition-all duration-300"
                   onClick={() => fileInputRef.current?.click()}
                   title="Click to upload new picture"
                 >

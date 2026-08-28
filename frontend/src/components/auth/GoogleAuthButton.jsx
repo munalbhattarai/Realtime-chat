@@ -173,7 +173,7 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
         type="button"
         onClick={handleCustomButtonClick}
         disabled={disabled || isLoading}
-        className="group relative flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-700/60 bg-slate-900/90 px-4 py-3.5 text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-red-500/50 hover:bg-slate-800/90 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+        className="group relative flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-700/60 bg-slate-900/90 px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-red-500/50 hover:bg-slate-800/90 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isLoading ? (
           <div className="flex items-center gap-2.5">
