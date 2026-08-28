@@ -268,3 +268,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Google OAuth 2.0 Credentials
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()

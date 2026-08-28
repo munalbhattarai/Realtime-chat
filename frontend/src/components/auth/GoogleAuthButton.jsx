@@ -2,7 +2,7 @@
  * GoogleAuthButton — Production-ready Google OAuth 2.0 / OpenID Connect button.
  *
  * Uses Google Identity Services (GIS).
- * Supports both VITE_GOOGLE_CLIENT_ID and dynamic backend fallback from settings.GOOGLE_CLIENT_ID.
+ * Seamlessly handles popup triggers, client ID trimming, and backend fallback.
  */
 import { useEffect, useRef, useState, useCallback } from "react";
 import { getGoogleClientId } from "../../features/auth/authApi";
@@ -29,7 +29,7 @@ const GoogleGIcon = ({ size = 20 }) => (
   </svg>
 );
 
-const STATIC_GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+const STATIC_GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
 
 const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", disabled = false }) => {
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
@@ -44,8 +44,8 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
 
     let isMounted = true;
     getGoogleClientId().then((id) => {
-      if (isMounted && id) {
-        setClientId(id);
+      if (isMounted && id && id.trim()) {
+        setClientId(id.trim());
       }
     });
 
@@ -115,7 +115,7 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
 
     try {
       window.google.accounts.id.initialize({
-        client_id: clientId,
+        client_id: clientId.trim(),
         callback: handleCredentialResponse,
         auto_select: false,
         cancel_on_tap_outside: true,
@@ -128,7 +128,7 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
           theme: "filled_black",
           size: "large",
           text: "continue_with",
-          shape: "pill",
+          shape: "rectangular",
           logo_alignment: "left",
           width: 380,
         });
@@ -139,13 +139,14 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
   }, [isScriptLoaded, clientId, handleCredentialResponse]);
 
   const handleCustomButtonClick = async () => {
-    let activeClientId = clientId;
+    let activeClientId = (clientId || "").trim();
 
     if (!activeClientId) {
       setIsLoading(true);
       try {
-        activeClientId = await getGoogleClientId();
-        if (activeClientId) {
+        const fetchedId = await getGoogleClientId();
+        if (fetchedId) {
+          activeClientId = fetchedId.trim();
           setClientId(activeClientId);
         }
       } catch {
@@ -170,59 +171,60 @@ const GoogleAuthButton = ({ onSuccess, onError, text = "Continue with Google", d
 
     setLocalError(null);
     try {
-      // Trigger native Google Prompt
+      // First try clicking rendered native button iframe
+      const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role="button"]');
+      if (nativeBtn) {
+        nativeBtn.click();
+        return;
+      }
+
+      // Fallback: Trigger native Google Prompt
       window.google.accounts.id.prompt((notification) => {
         if (notification.isNotDisplayed()) {
           console.info("Google Prompt not displayed:", notification.getNotDisplayedReason());
-          const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role="button"]');
-          if (nativeBtn) {
-            nativeBtn.click();
-          }
-        } else if (notification.isSkippedMoment()) {
-          console.info("Google Prompt skipped:", notification.getSkippedReason());
         }
       });
     } catch (err) {
       console.warn("Google prompt error:", err);
-      const nativeBtn = googleBtnContainerRef.current?.querySelector('div[role="button"]');
-      if (nativeBtn) {
-        nativeBtn.click();
-      }
     }
   };
 
   return (
     <div className="w-full space-y-2">
-      {/* Hidden native container for Google renderButton fallback */}
-      <div
-        ref={googleBtnContainerRef}
-        className="hidden"
-        aria-hidden="true"
-      />
-
-      {/* Styled Spidey-Theme Google Button */}
-      <button
-        type="button"
-        onClick={handleCustomButtonClick}
-        disabled={disabled || isLoading}
-        className="group relative flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-700/60 bg-slate-900/90 px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 hover:border-red-500/50 hover:bg-slate-800/90 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
-      >
-        {isLoading ? (
-          <div className="flex items-center gap-2.5">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
-            <span className="text-slate-300">Connecting to Google…</span>
-          </div>
-        ) : (
-          <>
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm transition-transform group-hover:scale-110">
-              <GoogleGIcon size={16} />
+      <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl group">
+        {/* Styled Spidey-Theme Google Button (Visual) */}
+        <button
+          type="button"
+          onClick={handleCustomButtonClick}
+          disabled={disabled || isLoading}
+          className="relative flex w-full items-center justify-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-700/60 bg-slate-900/90 px-3.5 py-2.5 sm:px-4 sm:py-3.5 text-xs sm:text-sm font-bold text-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.4)] backdrop-blur-md transition-all duration-200 group-hover:border-red-500/50 group-hover:bg-slate-800/90 group-hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] group-hover:scale-[1.01] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+        >
+          {isLoading ? (
+            <div className="flex items-center gap-2.5">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-red-500/20 border-t-red-500" />
+              <span className="text-slate-300">Connecting to Google…</span>
             </div>
-            <span className="tracking-wide text-slate-200 group-hover:text-white transition-colors">
-              {text}
-            </span>
-          </>
+          ) : (
+            <>
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white p-1 shadow-sm transition-transform group-hover:scale-110">
+                <GoogleGIcon size={16} />
+              </div>
+              <span className="tracking-wide text-slate-200 group-hover:text-white transition-colors">
+                {text}
+              </span>
+            </>
+          )}
+        </button>
+
+        {/* Native Google GIS button overlay (opacity 0) for direct user click without popup blocker */}
+        {!disabled && !isLoading && (
+          <div
+            ref={googleBtnContainerRef}
+            className="absolute inset-0 z-10 flex items-center justify-center opacity-0 cursor-pointer overflow-hidden [&_iframe]:w-full [&_iframe]:h-full [&_iframe]:cursor-pointer pointer-events-auto"
+            style={{ transform: "scale(1.5)" }}
+          />
         )}
-      </button>
+      </div>
 
       {localError && (
         <p className="text-center text-xs font-semibold text-rose-400 animate-fadeIn">
