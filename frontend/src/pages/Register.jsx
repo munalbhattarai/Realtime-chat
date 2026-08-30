@@ -75,7 +75,7 @@ const Register = () => {
               Join Web-Verse
             </h1>
             <p className="mt-0.5 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Become a Spidey-Chat Ally
+              Become an MB_chat Ally
             </p>
           </div>
 

@@ -5,6 +5,8 @@ import {
 } from "react-router-dom";
 
 import ProtectedRoute from "../components/common/ProtectedRoute";
+import PWAInstallBanner from "../components/pwa/PWAInstallBanner";
+import PWAUpdateReload from "../components/pwa/PWAUpdateReload";
 
 import Login from "../pages/Login";
 import Register from "../pages/Register";
@@ -41,6 +43,10 @@ const App = () => {
           }
         />
       </Routes>
+
+      {/* PWA Components */}
+      <PWAInstallBanner />
+      <PWAUpdateReload />
     </div>
   );
 };

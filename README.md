@@ -1,11 +1,11 @@
-# Realtime Chat & Video Calling Web App
+# MB_chat — Realtime Chat & Video Calling Web App (PWA)
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-chat.munal.me-0051C8?style=for-the-badge&logo=cloudflare&logoColor=white)](https://chat.munal.me)
 [![Frontend](https://img.shields.io/badge/Frontend-Cloudflare%20Pages-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://pages.cloudflare.com/)
 [![Backend](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://render.com/)
 [![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
 
-A full-stack, production-ready real-time chat and video calling application with a modern Spidey-themed UI.
+A full-stack, production-ready real-time chat and video calling Progressive Web App (PWA) named **MB_chat**.
 
 🌐 **Live Production**: [chat.munal.me](https://chat.munal.me)
 

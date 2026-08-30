@@ -8,9 +8,11 @@ import { useAuth } from "../../hooks/useAuth";
 import { getMediaUrl } from "../../services/api";
 import { getFriendRequests } from "../../features/auth/authApi";
 import SpideyLogo from "../common/SpideyLogo";
+import usePWAInstall from "../../hooks/usePWAInstall";
 
 const ConversationSidebar = () => {
   const { logout } = useAuth();
+  const { isInstallable, isInstalled, isIOS, promptInstall } = usePWAInstall();
   
   const currentUser = useSelector((state) => state.auth.user);
   
@@ -78,12 +80,27 @@ const ConversationSidebar = () => {
           <SpideyLogo size={32} />
           <div>
             <h1 className="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-400 to-blue-500 uppercase">
-              Spidey-Chat
+              MB_chat
             </h1>
             <p className="text-[10px] text-blue-400/80 font-medium tracking-wide">WEB-NET SECURE</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!isInstalled && (isInstallable || isIOS) && (
+            <button
+              onClick={promptInstall}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-950/60 border border-purple-500/40 text-purple-200 shadow-md shadow-purple-950/40 transition hover:bg-purple-900/70 hover:text-white hover:border-purple-400 hover:scale-105 active:scale-95 cursor-pointer"
+              aria-label="Install MB_chat"
+              title="Install MB_chat App"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+          )}
+
           {pendingRequestsCount > 0 && (
             <button
               onClick={() => openNewChatModal("requests")}

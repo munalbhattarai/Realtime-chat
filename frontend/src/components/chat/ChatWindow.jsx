@@ -139,7 +139,7 @@ const ChatWindow = () => {
           </div>
 
           <h1 className="mt-3 text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-rose-300 to-blue-400 uppercase">
-            Spidey Web-Net
+            MB_chat
           </h1>
 
           <p className="mt-2 text-xs font-medium text-slate-400">
